@@ -32,7 +32,7 @@ struct start_t {
     start_t();
     explicit start_t(const std::string &description);
     std::string description_;
-    ticks_t when_;
+    monotonic_t when_;
 };
 
 RDB_DECLARE_SERIALIZABLE(start_t);
@@ -59,7 +59,7 @@ RDB_DECLARE_SERIALIZABLE(sample_t);
 
 struct stop_t {
     stop_t();
-    ticks_t when_;
+    monotonic_t when_;
 };
 
 RDB_DECLARE_SERIALIZABLE(stop_t);

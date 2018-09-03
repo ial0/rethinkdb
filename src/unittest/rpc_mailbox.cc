@@ -91,7 +91,7 @@ TPTEST_MULTITHREAD(RPCMailboxTest, MailboxMessage, 3) {
     mailbox_manager_t m1(&c1, 'M'), m2(&c2, 'M');
     test_cluster_run_t r1(&c1);
     test_cluster_run_t r2(&c2);
-    r1.join(get_cluster_local_address(&c2), 0);
+    r1.join(get_cluster_local_address(&c2), seconds_t::zero());
     let_stuff_happen();
 
     /* Create a mailbox and send it three messages */

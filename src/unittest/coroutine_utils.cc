@@ -49,7 +49,7 @@ TEST(CoroutineUtilsTest, WithEnoughStackBlocking) {
     run_in_coro([&]() {
         // `COROUTINE_STACK_SIZE` forces a coroutine to be spawned
         res = call_with_enough_stack<int>([] () {
-            nap(5);
+            nap(milli_t{5});
             return 5;
         }, COROUTINE_STACK_SIZE);
     });

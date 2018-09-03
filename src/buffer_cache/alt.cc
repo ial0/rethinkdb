@@ -103,7 +103,7 @@ void alt_txn_throttler_t::inform_memory_limit_change(uint64_t memory_limit,
     unwritten_block_changes_semaphore_.set_capacity(throttler_limit);
 }
 
-int64_t clamp_ring_length(which_cpu_shard_t w, int64_t interval) {
+milli_t clamp_ring_length(which_cpu_shard_t w, milli_t interval) {
     if (w.which_shard == 0) {
         return interval;
     } else {
@@ -122,7 +122,7 @@ cache_t::cache_t(serializer_t *serializer,
           // Smear it over 6.25% of the time.  (Not a well thought-through number.)
           // 6.25% is a worst case -- we'll smear faster if we can.
           page_cache_.soft_durability_interval_flush(
-              ticks_t{get_ticks().nanos + soft_durability_flusher_.interval_ms() * MILLION / 16});
+              get_ticks() + (soft_durability_flusher_.interval_ms() / 16));
       }),
       which_cpu_shard_(which_cpu_shard) {
 
@@ -135,7 +135,7 @@ cache_t::~cache_t() {
 }
 
 void cache_t::configure_flush_interval(flush_interval_t interval) {
-    rassert(interval.millis > 0);
+    rassert(interval.millis > milli_t::zero());
     soft_durability_flusher_.change_interval(interval.millis);
     soft_durability_flusher_.clamp_next_ring(
         clamp_ring_length(which_cpu_shard_, interval.millis));

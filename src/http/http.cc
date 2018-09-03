@@ -4,6 +4,7 @@
 #include <math.h>
 #include <zlib.h>
 
+#include <iomanip>
 #include <exception>
 #include <re2/re2.h>
 
@@ -673,16 +674,22 @@ bool percent_unescape_string(const std::string &s, std::string *out) {
     return true;
 }
 
-std::string http_format_date(const time_t date) {
+std::string http_format_date(const realtime_t date) {
     struct tm t;
+    time_t time = std::chrono::system_clock::to_time_t(date);
 #ifdef _WIN32
-    errno_t err = gmtime_s(&t, &date);
+    errno_t err = gmtime_s(&t, &time);
     guarantee_xerr(err == 0, err, "gmtime_s failed");
 #else
-    struct tm *res1 = gmtime_r(&date, &t);
+    struct tm *res1 = gmtime_r(&time, &t);
     guarantee_err(res1 == &t, "gmtime_r() failed.");
 #endif
 
+    std::stringstream s;
+    s << std::put_time(&t, "%a, %d %b %Y %H:%M:%S GMT");
+    return s.str();
+
+    /*
     static const char *weekday[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
     static const char *month[] =  { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
@@ -696,4 +703,5 @@ std::string http_format_date(const time_t date) {
         t.tm_hour,
         t.tm_min,
         t.tm_sec);
+*/
 }

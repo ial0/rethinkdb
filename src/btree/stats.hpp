@@ -8,8 +8,8 @@ public:
     explicit btree_stats_t(perfmon_collection_t *parent,
                            const std::string &identifier)
         : btree_collection(),
-          pm_keys_read(secs_to_ticks(1)),
-          pm_keys_set(secs_to_ticks(1)),
+          pm_keys_read(seconds_t{1}),
+          pm_keys_set(seconds_t{1}),
           pm_keys_membership(&btree_collection,
               &pm_keys_read, "keys_read",
               &pm_total_keys_read, "total_keys_read",

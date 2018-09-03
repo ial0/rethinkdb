@@ -49,7 +49,7 @@ constexpr double GC_HIGH_RATIO = 0.3;
 // What's the maximum number of "young" extents we can have?
 const size_t GC_YOUNG_EXTENT_MAX_SIZE = 50;
 // What's the definition of a "young" extent in microseconds?
-const kiloticks_t GC_YOUNG_EXTENT_TIMELIMIT = { 50000 };
+const kiloticks_t GC_YOUNG_EXTENT_TIMELIMIT{ 50000 };
 
 
 // Identifies an extent, the time we started writing to the
@@ -358,7 +358,7 @@ public:
     extent_reference_t extent_ref;
 
     // When we started writing to the extent (this time).
-    const kiloticks_t timestamp;
+    const monotonic_t timestamp;
 
     // The PQ entry pointing to us.
     priority_queue_t<gc_entry_t *, gc_entry_less_t>::entry_t *our_pq_entry;
@@ -1525,10 +1525,10 @@ void data_block_manager_t::mark_unyoung_entries() {
         remove_last_unyoung_entry();
     }
 
-    kiloticks_t current_time = get_kiloticks();
+    auto current_time = clock_monotonic();
 
     while (young_extent_queue.head()
-           && current_time.micros - young_extent_queue.head()->timestamp.micros > GC_YOUNG_EXTENT_TIMELIMIT.micros) {
+           && current_time - young_extent_queue.head()->timestamp > GC_YOUNG_EXTENT_TIMELIMIT) {
         remove_last_unyoung_entry();
     }
 }

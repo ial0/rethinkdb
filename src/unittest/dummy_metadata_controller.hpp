@@ -48,7 +48,7 @@ private:
                 semilattice_join(&controller->metadata, new_metadata);
                 controller->change_publisher.publish(&dummy_semilattice_controller_t::call);
             }
-            if (rng.randint(2) == 0) nap(rng.randint(10));
+            if (rng.randint(2) == 0) nap(milli_t{rng.randint(10)});
         }
         void sync_from(peer_id_t, signal_t *interruptor) THROWS_ONLY(interrupted_exc_t, sync_failed_exc_t) {
             if (rng.randint(2) == 0) nap(rng.randint(10), interruptor);

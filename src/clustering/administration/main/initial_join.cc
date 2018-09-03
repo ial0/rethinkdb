@@ -58,8 +58,8 @@ initial_joiner_t::initial_joiner_t(
         connectivity_cluster_t *cluster_,
         connectivity_cluster_t::run_t *cluster_run,
         const peer_address_set_t &peers,
-        const int join_delay_secs_,
-        int timeout_ms) :
+        const seconds_t join_delay_secs_,
+        milli_t timeout_ms) :
     cluster(cluster_),
     peers_not_heard_from(peers),
     join_delay_secs(join_delay_secs_),
@@ -81,22 +81,22 @@ initial_joiner_t::initial_joiner_t(
         logWRN("Attempted to join self, peer ignored");
     }
 
-    if (timeout_ms != -1) {
+    if (timeout_ms != milli_t{-1}) {
         grace_period_timer.start(timeout_ms);
     }
 
     coro_t::spawn_sometime(std::bind(&initial_joiner_t::main_coro, this, cluster_run, auto_drainer_t::lock_t(&drainer)));
 }
 
-static const int initial_retry_interval_ms = 200;
-static const int max_retry_interval_ms = 1000 * 15;
+static const auto initial_retry_interval_ms = milli_t{200};
+static const milli_t max_retry_interval_ms = seconds_t{15};
 static const double retry_interval_growth_rate = 1.5;
-static const int grace_period_before_warn_ms = 1000 * 5;
+static const milli_t grace_period_before_warn_ms = seconds_t{5};
 
 void initial_joiner_t::main_coro(connectivity_cluster_t::run_t *cluster_run,
                                  auto_drainer_t::lock_t keepalive) {
     try {
-        int retry_interval_ms = initial_retry_interval_ms;
+        auto retry_interval_ms = initial_retry_interval_ms;
         logINF("Attempting connection to %zu peer%s...",
                peers_not_heard_from.size(), peers_not_heard_from.size() == 1 ? "" : "s");
         do {
@@ -110,7 +110,7 @@ void initial_joiner_t::main_coro(connectivity_cluster_t::run_t *cluster_run,
                 waiter.add(&grace_period_timer);
             }
             wait_interruptible(&waiter, keepalive.get_drain_signal());
-            retry_interval_ms = std::min(static_cast<int>(retry_interval_ms * retry_interval_growth_rate), max_retry_interval_ms);
+            retry_interval_ms = std::min(tick_floor<milli_t>(retry_interval_ms * retry_interval_growth_rate), max_retry_interval_ms);
         } while (!peers_not_heard_from.empty() && !grace_period_timer.is_pulsed());
         if (!peers_not_heard_from.empty()) {
             peer_address_set_t::iterator it = peers_not_heard_from.begin();

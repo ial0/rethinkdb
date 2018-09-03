@@ -13,6 +13,8 @@
 #include "config/args.hpp"
 #include "errors.hpp"
 
+#include "time.hpp"
+
 #ifdef _MSC_VER
 #include <BaseTsd.h>
 #include <random>
@@ -61,12 +63,14 @@ std::string vstrprintf(const char *format, va_list ap) ATTR_FORMAT(printf, 1, 0)
 const size_t formatted_time_length = 29;    // not including null
 
 enum class local_or_utc_time_t { local, utc };
-void format_time(struct timespec time, printf_buffer_t *buf, local_or_utc_time_t zone);
-std::string format_time(struct timespec time, local_or_utc_time_t zone);
+//void format_time(timespec_t time, printf_buffer_t *buf, local_or_utc_time_t zone);
+std::string format_time(timespec_t time, local_or_utc_time_t zone);
 
 bool parse_time(
     const std::string &str, local_or_utc_time_t zone,
     struct timespec *out, std::string *errmsg_out);
+
+timespec_t parse_time(const std::string &str, local_or_utc_time_t zone, std::string *errmsg_out);
 
 /* Printing binary data to stderr in a nice format */
 void print_hd(const void *buf, size_t offset, size_t length);

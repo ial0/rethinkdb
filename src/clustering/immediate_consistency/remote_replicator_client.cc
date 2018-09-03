@@ -181,7 +181,7 @@ remote_replicator_client_t::remote_replicator_client_t(
     auto progress_tracker =
         backfill_progress_tracker->insert_progress_tracker(region_);
     progress_tracker->is_ready = false;
-    progress_tracker->start_time = current_microtime();
+    progress_tracker->start_time = clock_realtime();
     progress_tracker->source_server_id = primary_server_id;
     progress_tracker->progress = 0.0;
 

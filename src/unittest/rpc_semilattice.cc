@@ -71,11 +71,11 @@ TPTEST(RPCSemilatticeTest, MetadataExchange, 2) {
     EXPECT_EQ(1u, slm1.get_root_view()->get().i);
     EXPECT_EQ(2u, slm2.get_root_view()->get().i);
 
-    run1.join(get_cluster_local_address(&cluster2), 0);
+    run1.join(get_cluster_local_address(&cluster2), seconds_t::zero());
 
     /* Block until the connection is established */
     signal_timer_t timeout;
-    timeout.start(1000);
+    timeout.start(seconds_t{1});
     cluster1.get_connections()->run_all_until_satisfied(
         [](watchable_map_t<peer_id_t, connectivity_cluster_t::connection_pair_t> *map) {
             return map->get_all().size() == 2;
@@ -110,11 +110,11 @@ TPTEST(RPCSemilatticeTest, SyncFrom, 2) {
     EXPECT_THROW(slm1.get_root_view()->sync_from(cluster2.get_me(), &non_interruptor), sync_failed_exc_t);
     EXPECT_THROW(slm1.get_root_view()->sync_to(cluster2.get_me(), &non_interruptor), sync_failed_exc_t);
 
-    run1.join(get_cluster_local_address(&cluster2), 0);
+    run1.join(get_cluster_local_address(&cluster2), seconds_t::zero());
 
     /* Block until the connection is established */
     signal_timer_t timeout;
-    timeout.start(1000);
+    timeout.start(seconds_t{1});
     cluster1.get_connections()->run_all_until_satisfied(
         [](watchable_map_t<peer_id_t, connectivity_cluster_t::connection_pair_t> *map) {
             return map->get_all().size() == 2;

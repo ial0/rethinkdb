@@ -256,8 +256,8 @@ ql::datum_t convert_port_to_datum(
 }
 
 ql::datum_t convert_microtime_to_datum(
-        microtime_t value) {
-    return ql::pseudo::make_time(value / 1.0e6, "+00:00");
+        realtime_t value) {
+    return ql::pseudo::make_time(time_cast<datum_seconds_t>(value.time_since_epoch()).count(), "+00:00");
 }
 
 bool converter_from_datum_object_t::init(

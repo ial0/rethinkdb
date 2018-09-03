@@ -29,8 +29,8 @@ public:
     };
 
     watchdog_timer_t(
-        int min_timeout_ms,
-        int max_timeout_ms,
+        milli_t min_timeout_ms,
+		milli_t max_timeout_ms,
         const std::function<void()> &callback,
         state_t initial_state = state_t::NOT_TRIGGERED);
     ~watchdog_timer_t();
@@ -44,7 +44,7 @@ public:
 private:
     void run(auto_drainer_t::lock_t);
     void set_next_threshold();
-    int min_timeout_ms, max_timeout_ms;
+    milli_t min_timeout_ms, max_timeout_ms;
     std::function<void()> callback;
     ticks_t next_threshold;
     int num_blockers;

@@ -7,16 +7,17 @@
 
 static const int entries_per_server = 1000;
 
-ql::datum_t convert_timespec_to_datum(const timespec &t) {
+ql::datum_t convert_timespec_to_datum(const timespec_t &t) {
     return ql::pseudo::make_time(
-        t.tv_sec + static_cast<double>(t.tv_nsec) / BILLION, "+00:00");
+        to_datum_time<datum_seconds_t>(t.time_since_epoch()).count(), "+00:00");
 }
 
-ql::datum_t convert_timespec_duration_to_datum(const timespec &t) {
-    return ql::datum_t(t.tv_sec + static_cast<double>(t.tv_nsec) / BILLION);
+ql::datum_t convert_duration_to_datum(const micro_t &d) {
+    //t.tv_sec + static_cast<double>(t.tv_nsec) / BILLION
+    return ql::datum_t(to_datum_time<datum_seconds_t>(d).count());
 }
 
-ql::datum_t convert_log_key_to_datum(const timespec &ts, const server_id_t &si) {
+ql::datum_t convert_log_key_to_datum(const timespec_t &ts, const server_id_t &si) {
     ql::datum_array_builder_t id_builder(ql::configured_limits_t::unlimited);
     id_builder.add(ql::datum_t(datum_string_t(
         format_time(ts, local_or_utc_time_t::utc))));
@@ -25,7 +26,7 @@ ql::datum_t convert_log_key_to_datum(const timespec &ts, const server_id_t &si) 
 }
 
 bool convert_log_key_from_datum(const ql::datum_t &d,
-        timespec *ts_out, server_id_t *si_out, admin_err_t *error_out) {
+        timespec_t *ts_out, server_id_t *si_out, admin_err_t *error_out) {
     if (d.get_type() != ql::datum_t::R_ARRAY || d.arr_size() != 2) {
         *error_out = admin_err_t{
             "Expected two-element array, got:" + d.print(),
@@ -39,11 +40,12 @@ bool convert_log_key_from_datum(const ql::datum_t &d,
         return false;
     }
     std::string err;
-    if (!parse_time(d.get(0).as_str().to_std(), local_or_utc_time_t::utc,
-            ts_out, &err)) {
+    auto t = parse_time(d.get(0).as_str().to_std(), local_or_utc_time_t::utc, &err);
+    if (!err.empty()) {
         *error_out = admin_err_t{"In timestamp: " + err, query_state_t::FAILED};
-        return false;
+        return false;        
     }
+    
     if (!convert_server_id_from_datum(d.get(1), si_out, error_out)) {
         return false;
     }
@@ -57,7 +59,7 @@ ql::datum_t convert_log_message_to_datum(
     builder.overwrite("id", convert_log_key_to_datum(msg.timestamp, server_id));
     builder.overwrite("server", server_datum);
     builder.overwrite("timestamp", convert_timespec_to_datum(msg.timestamp));
-    builder.overwrite("uptime", convert_timespec_duration_to_datum(msg.uptime));
+    builder.overwrite("uptime", convert_duration_to_datum(msg.uptime));
     builder.overwrite("level", ql::datum_t(datum_string_t(format_log_level(msg.level))));
     builder.overwrite("message", ql::datum_t(datum_string_t(msg.message)));
     return std::move(builder).to_datum();
@@ -109,7 +111,7 @@ bool logs_artificial_table_backend_t::read_row(
         signal_t *interruptor,
         ql::datum_t *row_out,
         admin_err_t *error_out) {
-    timespec timestamp;
+    timespec_t timestamp;
     server_id_t server_id;
     admin_err_t dummy_error;
     if (!convert_log_key_from_datum(primary_key, &timestamp, &server_id, &dummy_error)) {
@@ -258,13 +260,13 @@ void logs_artificial_table_backend_t::cfeed_machinery_t::run(
     guarantee(!starting, "starting should be set to false before run() actually starts");
 
     /* `poll_interval_ms` is how long to wait between polling for new messages. */
-    static const int poll_interval_ms = 1000;
+    static const milli_t poll_interval_ms = seconds_t{1};
 
     try {
         /* First, fetch the initial value of the latest timestamp in the log. The reason
         this is in a loop is so that we keep retrying if something goes wrong: the log
         file is empty, we can't read it for some reason, etc. */
-        timespec initial_latest_timestamp;
+        timespec_t initial_latest_timestamp;
         while (true) {
             if (!check_disconnected(peer)) {
                 /* The peer is disconnected, so this instance of `run()` is going to
@@ -283,8 +285,8 @@ void logs_artificial_table_backend_t::cfeed_machinery_t::run(
             /* Fetch the last message in the server's log file */
             std::vector<log_message_t> messages;
             try {
-                timespec min_time = { 0, 0 };
-                timespec max_time = { std::numeric_limits<time_t>::max(), 0 };
+                timespec_t min_time = timespec_t::min();
+                timespec_t max_time = timespec_t::max();
                 messages = fetch_log_file(
                     parent->mailbox_manager,
                     bcard,
@@ -313,7 +315,7 @@ void logs_artificial_table_backend_t::cfeed_machinery_t::run(
             break;
         }
 
-        map_insertion_sentry_t<peer_id_t, timespec> last_timestamp(
+        map_insertion_sentry_t<peer_id_t, timespec_t> last_timestamp(
             &last_timestamps, peer, initial_latest_timestamp);
 
         /* Now that we've fetched the initial timestamp, we can let the call to
@@ -336,9 +338,8 @@ void logs_artificial_table_backend_t::cfeed_machinery_t::run(
             std::vector<log_message_t> messages;
             try {
                 /* We choose `min_time` so as to exclude the last message from before */
-                timespec min_time = *last_timestamp.get_value();
-                add_to_timespec(&min_time, 1);
-                timespec max_time = { std::numeric_limits<time_t>::max(), 0 };
+                timespec_t min_time = *last_timestamp.get_value() + nano_t{1};
+                timespec_t max_time = timespec_t::max();
                 messages = fetch_log_file(
                     parent->mailbox_manager,
                     bcard,
@@ -476,8 +477,8 @@ bool logs_artificial_table_backend_t::read_all_rows_raw(
 
             std::vector<log_message_t> messages;
             try {
-                struct timespec min_time = { 0, 0 };
-                struct timespec max_time = { std::numeric_limits<time_t>::max(), 0 };
+                timespec_t min_time = timespec_t::min();
+                timespec_t max_time = timespec_t::max();
                 messages = fetch_log_file(
                     mailbox_manager,
                     pair.second,

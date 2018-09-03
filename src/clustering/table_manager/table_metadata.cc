@@ -37,14 +37,13 @@ RDB_IMPL_SERIALIZABLE_2_SINCE_v2_1(table_active_persistent_state_t,
 RDB_IMPL_SERIALIZABLE_2_SINCE_v2_1(table_inactive_persistent_state_t,
     second_hand_config, timestamp);
 
-const microtime_t multi_table_manager_timestamp_t::epoch_t::special_timestamp =
-    static_cast<microtime_t>(std::numeric_limits<time_t>::min());
+const realtime_t multi_table_manager_timestamp_t::epoch_t::special_timestamp = realtime_t::min();
 
 multi_table_manager_timestamp_t::epoch_t
 multi_table_manager_timestamp_t::epoch_t::min() {
     epoch_t e;
     e.id = nil_uuid();
-    e.timestamp = 0;
+    e.timestamp = realtime_t{};
     return e;
 }
 
@@ -52,34 +51,34 @@ multi_table_manager_timestamp_t::epoch_t
 multi_table_manager_timestamp_t::epoch_t::deletion() {
     epoch_t e;
     e.id = nil_uuid();
-    e.timestamp = std::numeric_limits<microtime_t>::max();
+    e.timestamp = realtime_t::max();
     return e;
 }
 
 multi_table_manager_timestamp_t::epoch_t
 multi_table_manager_timestamp_t::epoch_t::make(const epoch_t &prev) {
-    guarantee(prev.timestamp != std::numeric_limits<microtime_t>::max());
-    microtime_t old_timestamp =
-        (prev.timestamp == special_timestamp ? 0 : prev.timestamp);
+    guarantee(prev.timestamp != realtime_t::max());
+    auto old_timestamp =
+        (prev.timestamp == special_timestamp ? realtime_t{} : prev.timestamp);
 
     epoch_t e;
     e.id = generate_uuid();
-    e.timestamp = std::max(current_microtime(), old_timestamp + 1);
+    e.timestamp = std::max(clock_realtime(), old_timestamp + micro_t{1});
     return e;
 }
 
 multi_table_manager_timestamp_t::epoch_t
-multi_table_manager_timestamp_t::epoch_t::migrate(time_t ts) {
+multi_table_manager_timestamp_t::epoch_t::migrate(realtime_t ts) {
     epoch_t e;
     e.id = generate_uuid();
-    e.timestamp = static_cast<microtime_t>(ts < 0 ? 0 : ts);
+    e.timestamp = ts < realtime_t{} ? realtime_t{} : ts;
     return e;
 }
 
 ql::datum_t multi_table_manager_timestamp_t::epoch_t::to_datum() const {
     ql::datum_object_builder_t builder;
     builder.overwrite(
-        "timestamp", ql::datum_t(static_cast<double>(timestamp)));
+        "timestamp", ql::datum_t(to_datum_time<datum_micro_t>(timestamp.time_since_epoch()).count()));
     builder.overwrite("id", convert_uuid_to_datum(id));
     return std::move(builder).to_datum();
 }
@@ -89,7 +88,7 @@ bool multi_table_manager_timestamp_t::epoch_t::is_unset() const {
 }
 
 bool multi_table_manager_timestamp_t::epoch_t::is_deletion() const {
-    return id.is_nil() && timestamp == std::numeric_limits<microtime_t>::max();
+    return id.is_nil() && timestamp == realtime_t::max();
 }
 
 bool multi_table_manager_timestamp_t::epoch_t::operator==(const epoch_t &other) const {
@@ -101,10 +100,10 @@ bool multi_table_manager_timestamp_t::epoch_t::operator!=(const epoch_t &other) 
 
 bool multi_table_manager_timestamp_t::epoch_t::supersedes(const epoch_t &other) const {
     // Workaround for issue #4668 - handle invalid timestamps from migration
-    microtime_t this_timestamp =
-        (timestamp == special_timestamp ? 0 : timestamp);
-    microtime_t other_timestamp =
-        (other.timestamp == special_timestamp ? 0 : other.timestamp);
+    auto this_timestamp =
+        (timestamp == special_timestamp ? realtime_t{} : timestamp);
+    auto other_timestamp =
+        (other.timestamp == special_timestamp ? realtime_t{} : other.timestamp);
 
     if (this_timestamp > other_timestamp) {
         return true;

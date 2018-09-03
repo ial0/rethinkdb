@@ -210,7 +210,7 @@ void check_keys_are_present(store_t *store,
         /* Unfortunately we don't have an easy way right now to tell if the
          * sindex has actually been postconstructed so we just need to
          * check by polling. */
-        nap(500);
+        nap(milli_t{500});
     }
     ADD_FAILURE() << "Sindex still not available after many tries.";
 }
@@ -238,7 +238,7 @@ void check_keys_are_NOT_present(store_t *store,
         /* Unfortunately we don't have an easy way right now to tell if the
          * sindex has actually been postconstructed so we just need to
          * check by polling. */
-        nap(500);
+        nap(milli_t{500});
     }
     ADD_FAILURE() << "Sindex still not available after many tries.";
 }
@@ -453,7 +453,7 @@ TPTEST(RDBBtree, SindexInterruptionViaStoreDelete) {
     insert_rows(0, (TOTAL_KEYS_TO_INSERT * 9) / 10, store.get());
 
     create_sindex(store.get());
-    nap(1000);
+    nap(seconds_t{1});
     store.reset();
 }
 

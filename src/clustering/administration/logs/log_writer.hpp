@@ -16,16 +16,18 @@
 #include "rpc/mailbox/typed.hpp"
 #include "utils.hpp"
 
+#include "time.hpp"
+
 ARCHIVE_PRIM_MAKE_RANGED_SERIALIZABLE(log_level_t, int, log_level_debug, log_level_error);
-RDB_DECLARE_SERIALIZABLE(struct timespec);
+RDB_DECLARE_SERIALIZABLE(timespec_t);
 
 class log_message_t {
 public:
     log_message_t() { }
-    log_message_t(struct timespec t, struct timespec u, log_level_t l, std::string m) :
+    log_message_t(timespec_t t, micro_t u, log_level_t l, std::string m) :
         timestamp(t), uptime(u), level(l), message(m) { }
-    struct timespec timestamp;
-    struct timespec uptime;
+    timespec_t timestamp;
+    micro_t uptime;
     log_level_t level;
     std::string message;
 };
@@ -69,7 +71,7 @@ public:
     thread_pool_log_writer_t();
     ~thread_pool_log_writer_t();
 
-    std::vector<log_message_t> tail(int max_lines, struct timespec min_timestamp, struct timespec max_timestamp, signal_t *interruptor) THROWS_ONLY(log_read_exc_t, interrupted_exc_t);
+    std::vector<log_message_t> tail(int max_lines, timespec_t min_timestamp, timespec_t max_timestamp, signal_t *interruptor) THROWS_ONLY(log_read_exc_t, interrupted_exc_t);
 
     log_write_issue_tracker_t *get_log_write_issue_tracker() {
         return &log_write_issue_tracker;
@@ -84,8 +86,8 @@ private:
     void write(const log_message_t &msg);
     void write_blocking(const log_message_t &msg, std::string *error_out, bool *ok_out);
     void tail_blocking(int max_lines,
-                       struct timespec min_timestamp,
-                       struct timespec max_timestamp,
+                       timespec_t min_timestamp,
+                       timespec_t max_timestamp,
                        volatile bool *cancel,
                        std::vector<log_message_t> *messages_out,
                        std::string *error_out,

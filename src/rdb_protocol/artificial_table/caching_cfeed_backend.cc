@@ -138,7 +138,7 @@ void caching_cfeed_artificial_table_backend_t::caching_machinery_t::run(
                 dirtiness = dirtiness_t::all;
                 /* Go around the loop and try again. But first wait a second so we
                 don't eat too much CPU if it keeps failing. */
-                nap(1000, keepalive.get_drain_signal());
+                nap(seconds_t{1}, keepalive.get_drain_signal());
                 continue;
             }
 
@@ -297,7 +297,7 @@ caching_cfeed_artificial_table_backend_t::construct_changefeed_machinery(
 void timer_cfeed_artificial_table_backend_t::set_notifications(bool notify) {
     if (notify && !timer.has()) {
         timer.init(new repeating_timer_t(
-            1000,
+            seconds_t{1},
             [this]() { notify_all(); }
             ));
     }

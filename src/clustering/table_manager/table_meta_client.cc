@@ -781,9 +781,9 @@ void table_meta_client_t::retry(
     election timeout, we can be reasonably certain that if it fails that many times there
     is a real problem and not just a transient failure. */
     static const int max_tries = 8;
-    static const int initial_wait_ms = 300;
+    static const milli_t initial_wait_ms{300};
     int tries_left = max_tries;
-    int wait_ms = initial_wait_ms;
+    milli_t wait_ms = initial_wait_ms;
     bool maybe_succeeded = false;
     for (;;) {
         try {
@@ -831,7 +831,7 @@ void table_meta_client_t::wait_until_change_visible(
         THROWS_ONLY(interrupted_exc_t, maybe_failed_table_op_exc_t)
 {
     signal_timer_t timeout;
-    timeout.start(10*1000);
+    timeout.start(seconds_t{10});
     wait_any_t interruptor_combined(interruptor, &timeout);
     try {
         multi_table_manager->get_table_basic_configs()->run_key_until_satisfied(

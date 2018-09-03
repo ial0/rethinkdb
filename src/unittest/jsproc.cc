@@ -18,7 +18,7 @@ SPAWNER_TEST(JSProc, EvalTimeout) {
     const std::string loop_source = "for (var x = 0; x < 4e10; x++) {}";
 
     js_runner_t::req_config_t config;
-    config.timeout_ms = 10;
+    config.timeout_ms = milli_t{10};
 
     js_result_t result = js_runner.eval(loop_source, config);
     std::string value = boost::get<std::string>(result);
@@ -36,14 +36,14 @@ SPAWNER_TEST(JSProc, CallTimeout) {
     const std::string loop_source = "(function () { for (var x = 0; x < 4e10; x++) {}})";
 
     js_runner_t::req_config_t config;
-    config.timeout_ms = 10000;
+    config.timeout_ms = seconds_t{10};
 
     js_result_t result = js_runner.eval(loop_source, config);
 
     js_id_t *any_id = boost::get<js_id_t>(&result);
     ASSERT_TRUE(any_id != nullptr);
 
-    config.timeout_ms = 10;
+    config.timeout_ms = milli_t{10};
 
     result = js_runner.call(loop_source, std::vector<ql::datum_t>(), config);
     std::string value = boost::get<std::string>(result);
@@ -59,7 +59,7 @@ void run_datum_test(const std::string &source_code, ql::datum_t *res_out) {
     js_runner.begin(&extproc_pool, nullptr, limits);
 
     js_runner_t::req_config_t config;
-    config.timeout_ms = 10000;
+    config.timeout_ms = seconds_t{10};
     js_result_t result = js_runner.eval(source_code, config);
     ASSERT_TRUE(js_runner.connected());
 
@@ -95,7 +95,7 @@ SPAWNER_TEST(JSProc, EvalAndCall) {
     const std::string source_code = "(function () { return 10337; })";
 
     js_runner_t::req_config_t config;
-    config.timeout_ms = 10000;
+    config.timeout_ms = seconds_t{10};
     js_result_t result = js_runner.eval(source_code, config);
     ASSERT_TRUE(js_runner.connected());
 
@@ -127,7 +127,7 @@ SPAWNER_TEST(JSProc, BrokenFunction) {
     const std::string source_code = "(function () { return 4 / 0; })";
 
     js_runner_t::req_config_t config;
-    config.timeout_ms = 10000;
+    config.timeout_ms = seconds_t{10};
     js_result_t result = js_runner.eval(source_code, config);
     ASSERT_TRUE(js_runner.connected());
 
@@ -156,10 +156,11 @@ SPAWNER_TEST(JSProc, InvalidFunction) {
     const std::string source_code = "(function() {)";
 
     js_runner_t::req_config_t config;
-    config.timeout_ms = 10000;
+
+    config.timeout_ms = seconds_t{10};
     js_result_t result = js_runner.eval(source_code, config);
     ASSERT_TRUE(js_runner.connected());
-
+    
     // Get the error message
     std::string *error = boost::get<std::string>(&result);
     ASSERT_TRUE(error != nullptr);
@@ -175,7 +176,7 @@ SPAWNER_TEST(JSProc, InfiniteRecursionFunction) {
     const std::string source_code = "(function f(x) { x = x + f(x); return x; })";
 
     js_runner_t::req_config_t config;
-    config.timeout_ms = 60000;
+    config.timeout_ms = seconds_t{60};
     js_result_t result = js_runner.eval(source_code, config);
     ASSERT_TRUE(js_runner.connected());
 
@@ -209,7 +210,7 @@ void run_overalloc_function_test() {
                                      "})";
 
     js_runner_t::req_config_t config;
-    config.timeout_ms = 60000;
+    config.timeout_ms = seconds_t{60};
     js_result_t result = js_runner.eval(source_code, config);
     ASSERT_TRUE(js_runner.connected());
 
@@ -242,7 +243,7 @@ void passthrough_test_internal(extproc_pool_t *pool, const ql::datum_t &arg) {
     const std::string source_code = "(function f(arg) { return arg; })";
 
     js_runner_t::req_config_t config;
-    config.timeout_ms = 60000;
+    config.timeout_ms = seconds_t{60};
     js_result_t result = js_runner.eval(source_code, config);
     ASSERT_TRUE(js_runner.connected());
 

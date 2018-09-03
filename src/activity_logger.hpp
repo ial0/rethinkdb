@@ -19,7 +19,7 @@ public:
     std::string print(bool print_bt);
 
 private:
-    microtime_t timestamp;
+    realtime_t timestamp;
     std::string msg;
     scoped_ptr_t<lazy_backtrace_formatter_t> bt;
 

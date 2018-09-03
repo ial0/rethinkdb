@@ -11,7 +11,7 @@ class timer_token_t;
 struct timer_callback_t {
     // The same "ticks" value gets passed to multiple on_timer() callbacks, so it could
     // become "old" if a callback is slow.
-    virtual void on_timer(ticks_t ticks) = 0;
+    virtual void on_timer(monotonic_t ticks) = 0;
     virtual ~timer_callback_t() { }
 };
 
@@ -25,7 +25,7 @@ public:
     ~timer_handler_t();
 
     // If interval_ms is zero that means a non-repeating callback.
-    timer_token_t *add_timer_internal(ticks_t next_time, int64_t interval_ms,
+    timer_token_t *add_timer_internal(monotonic_t next_time, milli_t interval,
                                       timer_callback_t *callback);
     void cancel_timer(timer_token_t *timer);
 
@@ -37,7 +37,7 @@ private:
 
     // The expected time of the next on_oneshot call.  If the oneshot arrived earlier
     // than this time, we pretend that it had arrived on time.
-    int64_t expected_oneshot_time_in_nanos;
+    monotonic_t expected_oneshot_time;
 
     // A priority queue of timer tokens, ordered by the soonest.
     intrusive_priority_queue_t<timer_token_t> token_queue;
@@ -53,10 +53,10 @@ private:
 
 // Adds a repeating timer where the first ring starts at next_time (or immediately,
 // if that time was in the past).
-timer_token_t *add_timer2(ticks_t next_time, int64_t interval_ms,
+timer_token_t *add_timer2(monotonic_t next_time, milli_t ms,
                           timer_callback_t *callback);
-timer_token_t *add_timer(int64_t ms, timer_callback_t *callback);
-timer_token_t *fire_timer_once(int64_t ms, timer_callback_t *callback);
+timer_token_t *add_timer(milli_t ms, timer_callback_t *callback);
+timer_token_t *fire_timer_once(milli_t ms, timer_callback_t *callback);
 void cancel_timer(timer_token_t *timer);
 
 

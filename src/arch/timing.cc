@@ -8,17 +8,19 @@
 #include "arch/runtime/coroutines.hpp"
 #include "concurrency/wait_any.hpp"
 
+#include "time.hpp"
+
 // nap()
 
-void nap(int64_t ms) THROWS_NOTHING {
-    if (ms > 0) {
+void nap(milli_t ms) THROWS_NOTHING {
+    if (ms > milli_t::zero()) {
         signal_timer_t timer;
         timer.start(ms);
         timer.wait_lazily_ordered();
     }
 }
 
-void nap(int64_t ms, const signal_t *interruptor) THROWS_ONLY(interrupted_exc_t) {
+void nap(milli_t ms, const signal_t *interruptor) THROWS_ONLY(interrupted_exc_t) {
     signal_timer_t timer(ms);
     wait_interruptible(&timer, interruptor);
 }
@@ -26,7 +28,7 @@ void nap(int64_t ms, const signal_t *interruptor) THROWS_ONLY(interrupted_exc_t)
 // signal_timer_t
 
 signal_timer_t::signal_timer_t() : timer(nullptr) { }
-signal_timer_t::signal_timer_t(int64_t ms) : timer(nullptr) {
+signal_timer_t::signal_timer_t(milli_t ms) : timer(nullptr) {
     start(ms);
 }
 
@@ -36,13 +38,13 @@ signal_timer_t::~signal_timer_t() {
     }
 }
 
-void signal_timer_t::start(int64_t ms) {
+void signal_timer_t::start(milli_t ms) {
     guarantee(timer == nullptr);
     guarantee(!is_pulsed());
-    if (ms == 0) {
+    if (ms == milli_t::zero()) {
         pulse();
     } else {
-        guarantee(ms > 0);
+        guarantee(ms > milli_t::zero());
         timer = fire_timer_once(ms, this);
     }
 }
@@ -60,7 +62,7 @@ bool signal_timer_t::is_running() const {
     return is_pulsed() || timer != nullptr;
 }
 
-void signal_timer_t::on_timer(ticks_t) {
+void signal_timer_t::on_timer(monotonic_t) {
     timer = nullptr;
     pulse();
 }
@@ -68,47 +70,46 @@ void signal_timer_t::on_timer(ticks_t) {
 // repeating_timer_t
 
 repeating_timer_t::repeating_timer_t(
-        int64_t interval_ms, const std::function<void()> &_ringee) :
-    interval(interval_ms),
-    last_ticks(get_ticks()),
-    expected_next_ticks(ticks_t{last_ticks.nanos + interval * MILLION}),
+        milli_t interval, const std::function<void()> &_ringee) :
+    interval(interval),
+    last_time(clock_monotonic()),
+    expected_next(last_time + interval),
     ringee(_ringee) {
-    rassert(interval_ms > 0);
-    timer = add_timer(interval_ms, this);
+    rassert(interval > milli_t::zero());
+    timer = add_timer(interval, this);
 }
 
 repeating_timer_t::repeating_timer_t(
-        int64_t interval_ms, repeating_timer_callback_t *_cb) :
-    interval(interval_ms),
-    last_ticks(get_ticks()),
-    expected_next_ticks(ticks_t{last_ticks.nanos + interval * MILLION}),
+        milli_t interval, repeating_timer_callback_t *_cb) :
+    interval(interval),
+    last_time(clock_monotonic()),
+    expected_next(last_time + interval),
     ringee([_cb]() { _cb->on_ring(); }) {
-    rassert(interval_ms > 0);
-    timer = add_timer(interval_ms, this);
+    rassert(interval > milli_t::zero());
+    timer = add_timer(interval, this);
 }
 
 repeating_timer_t::~repeating_timer_t() {
     cancel_timer(timer);
 }
 
-void repeating_timer_t::change_interval(int64_t interval_ms) {
+void repeating_timer_t::change_interval(milli_t interval_ms) {
     if (interval_ms == interval) {
         return;
     }
 
     interval = interval_ms;
     cancel_timer(timer);
-    expected_next_ticks.nanos = std::min<int64_t>(last_ticks.nanos + interval_ms * MILLION,
-                                                  expected_next_ticks.nanos);
-    timer = add_timer2(expected_next_ticks, interval_ms, this);
+    expected_next = std::min(last_time + interval_ms, expected_next);
+    timer = add_timer2(expected_next, interval_ms, this);
 }
 
-void repeating_timer_t::clamp_next_ring(int64_t delay_ms) {
-    int64_t t = last_ticks.nanos + delay_ms * MILLION;
-    if (t < expected_next_ticks.nanos) {
+void repeating_timer_t::clamp_next_ring(milli_t delay) {
+    auto t = last_time + delay;
+    if (t < expected_next) {
         cancel_timer(timer);
-        expected_next_ticks = ticks_t{t};
-        timer = add_timer2(expected_next_ticks, interval, this);
+        expected_next = t;
+        timer = add_timer2(expected_next, interval, this);
     }
 }
 
@@ -120,10 +121,10 @@ void call_ringer(std::function<void()> ringee) {
     ringee();
 }
 
-void repeating_timer_t::on_timer(ticks_t ticks) {
+void repeating_timer_t::on_timer(monotonic_t time) {
     // Spawn _now_, otherwise the repeating_timer_t lifetime might end
     // before ring gets used.
-    last_ticks = ticks;
-    expected_next_ticks.nanos = last_ticks.nanos + interval * MILLION;
+    last_time = time;
+    expected_next = last_time + interval;
     coro_t::spawn_now_dangerously(std::bind(call_ringer, ringee));
 }

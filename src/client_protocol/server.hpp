@@ -22,6 +22,8 @@
 #include "perfmon/perfmon.hpp"
 #include "utils.hpp"
 
+#include "time.hpp"
+
 class auth_key_t;
 
 class rdb_context_t;
@@ -69,7 +71,7 @@ public:
 
     std::string expired_error_message() const;
 private:
-    static const int64_t TIMER_RESOLUTION_MS = 5000;
+    static constexpr milli_t TIMER_RESOLUTION_MS = seconds_t{5};
 
     // Random number generator used for generating cryptographic connection IDs
     std::mt19937 key_generator;

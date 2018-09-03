@@ -71,7 +71,7 @@ protected:
         void maybe_remove();
         /* If we don't have any subscribers, this is the time the last one disconnected.
         */
-        kiloticks_t last_subscriber_time;
+        monotonic_t last_subscriber_time;
     };
 
     cfeed_artificial_table_backend_t(

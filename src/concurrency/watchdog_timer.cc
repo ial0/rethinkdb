@@ -22,7 +22,7 @@ watchdog_timer_t::blocker_t::~blocker_t() {
 }
 
 watchdog_timer_t::watchdog_timer_t(
-        int _min, int _max, const std::function<void()> &_callback,
+        milli_t _min, milli_t _max, const std::function<void()> &_callback,
         state_t initial_state) :
     min_timeout_ms(_min), max_timeout_ms(_max), callback(_callback),
     num_blockers(0), state(initial_state)
@@ -48,7 +48,7 @@ void watchdog_timer_t::run(auto_drainer_t::lock_t keepalive) {
     try {
         for (;;) {
             ticks_t now = get_ticks();
-            if (now.nanos > next_threshold.nanos) {
+            if (now > next_threshold) {
                 ASSERT_NO_CORO_WAITING;
                 if (num_blockers == 0) {
                     state = state_t::TRIGGERED;
@@ -59,13 +59,13 @@ void watchdog_timer_t::run(auto_drainer_t::lock_t keepalive) {
                 /* Wait a bit before calling `callback()` again */
                 set_next_threshold();
             }
-            if (next_threshold.nanos > now.nanos + max_timeout_ms * MILLION) {
+            if (next_threshold > now + max_timeout_ms) {
                 /* This can only happen if the system clock goes backwards. Rather than
                 wait until the system clock catches up to its old value, we reset
                 `next_threshold` to only `max_timeout_ms` in the future. */
-                next_threshold.nanos = now.nanos + max_timeout_ms * MILLION;
+                next_threshold = now + max_timeout_ms;
             }
-            nap((next_threshold.nanos - now.nanos) / MILLION, keepalive.get_drain_signal());
+            nap(time_cast<milli_t>(next_threshold - now), keepalive.get_drain_signal());
         }
     } catch (const interrupted_exc_t &) {
         /* `watchdog_timer_t` is being destroyed */
@@ -73,7 +73,7 @@ void watchdog_timer_t::run(auto_drainer_t::lock_t keepalive) {
 }
 
 void watchdog_timer_t::set_next_threshold() {
-    int timeout_ms = min_timeout_ms + randint(max_timeout_ms - min_timeout_ms + 1);
-    next_threshold = ticks_t{get_ticks().nanos + timeout_ms * MILLION};
+    auto timeout_ms = min_timeout_ms + milli_t{randint((max_timeout_ms - min_timeout_ms + milli_t{1}).count())};
+    next_threshold = ticks_t{get_ticks() + timeout_ms};
 }
 

@@ -7,7 +7,7 @@
 void debug_print(printf_buffer_t *buf,
                  const stats_diskmgr_2_action_t &action) {
     buf->appendf("stats_diskmgr_2_action{start_time=%" PRIi64 "}<",
-                 action.start_time.nanos);
+                 action.start_time.count());
     const pool_diskmgr_t::action_t &parent_action = action;
     debug_print(buf, parent_action);
 }
@@ -21,8 +21,8 @@ stats_diskmgr_2_t::stats_diskmgr_2_t(
     passive_producer_t<pool_diskmgr_t::action_t *>(_source->available),
     producer(this),
     source(_source),
-    read_sampler(secs_to_ticks(1)),
-    write_sampler(secs_to_ticks(1)),
+    read_sampler(seconds_t{1}),
+    write_sampler(seconds_t{1}),
     stats_membership(stats,
                      &read_sampler, (name + "_read").c_str(),
                      &write_sampler, (name + "_write").c_str()) { }

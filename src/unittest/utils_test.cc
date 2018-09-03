@@ -72,15 +72,13 @@ TEST(UtilsTest, TimeLocal) {
     tzset();
 #endif
 
-    struct timespec time = {1335301122, 1234};
+    timespec_t time = timespec_t{seconds_t{1335301122} + nano_t{1234}};
     std::string formatted = format_time(time, local_or_utc_time_t::local);
     EXPECT_EQ("2012-04-24T13:58:42.000001234", formatted);
-    struct timespec parsed;
     std::string errmsg;
-    bool success = parse_time(formatted, local_or_utc_time_t::local, &parsed, &errmsg);
-    ASSERT_TRUE(success);
-    EXPECT_EQ(time.tv_sec, parsed.tv_sec);
-    EXPECT_EQ(time.tv_nsec, parsed.tv_nsec);
+    auto parsed = parse_time(formatted, local_or_utc_time_t::local, &errmsg);
+    ASSERT_TRUE(errmsg.empty());
+    EXPECT_EQ(parsed, time);
 
 #ifdef _WIN32
     _putenv(("TZ=" + oldtz).c_str());
@@ -96,15 +94,13 @@ TEST(UtilsTest, TimeLocal) {
 }
 
 TEST(UtilsTest, TimeUTC) {
-    struct timespec time = {1335301122, 1234};
+	timespec_t time = timespec_t{seconds_t{1335301122} + nano_t{1234}};
     std::string formatted = format_time(time, local_or_utc_time_t::utc);
     EXPECT_EQ("2012-04-24T20:58:42.000001234", formatted);
-    struct timespec parsed;
     std::string errmsg;
-    bool success = parse_time(formatted, local_or_utc_time_t::utc, &parsed, &errmsg);
-    ASSERT_TRUE(success);
-    EXPECT_EQ(time.tv_sec, parsed.tv_sec);
-    EXPECT_EQ(time.tv_nsec, parsed.tv_nsec);
+    auto parsed = parse_time(formatted, local_or_utc_time_t::utc, &errmsg);
+    ASSERT_TRUE(errmsg.empty());
+    EXPECT_EQ(parsed, time);
 }
 
 TEST(BtreeUtilsTest, SizedStrcmp) {

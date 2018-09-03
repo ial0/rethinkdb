@@ -2,6 +2,7 @@
 #ifndef CLUSTERING_TABLE_MANAGER_TABLE_METADATA_HPP_
 #define CLUSTERING_TABLE_MANAGER_TABLE_METADATA_HPP_
 
+#include "time.hpp"
 #include "clustering/generic/minidir.hpp"
 #include "clustering/generic/raft_core.hpp"
 #include "clustering/generic/raft_network.hpp"
@@ -24,7 +25,7 @@ public:
     public:
         static epoch_t min();
         static epoch_t deletion();
-        static epoch_t migrate(time_t ts);
+        static epoch_t migrate(realtime_t ts);
         static epoch_t make(const epoch_t &prev);
 
         ql::datum_t to_datum() const;
@@ -37,7 +38,7 @@ public:
     private:
         // Workaround for issue #4668 - invalid timestamps that were migrated
         // These timestamps should never supercede any other timestamps
-        static const microtime_t special_timestamp;
+        static const realtime_t special_timestamp;
 
         /* Every table's lifetime is divided into "epochs". Each epoch corresponds to
         one Raft instance. Normally tables only have one epoch; a new epoch is created
@@ -49,7 +50,7 @@ public:
         with an earlier `timestamp`. `id` breaks ties. Ties are possible because the
         user may manually override the Raft state on both sides of a netsplit, for
         example. */
-        microtime_t timestamp;
+        realtime_t timestamp;
         uuid_u id;
 
         // Keep the class keyword here to satisfy VC++

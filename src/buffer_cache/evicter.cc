@@ -18,7 +18,7 @@ evicter_t::evicter_t()
       access_count_counter_(0),
       access_time_counter_(INITIAL_ACCESS_TIME),
       evict_if_necessary_active_(false),
-      last_force_flush_time_(ticks_t{0}) { }
+      last_force_flush_time_(ticks_t::zero()) { }
 
 evicter_t::~evicter_t() {
     assert_thread();
@@ -211,9 +211,9 @@ void evicter_t::evict_if_necessary() THROWS_NOTHING {
         // Basically we force a fast flush once every 5 seconds if we've got many
         // unaccounted for dirty pages.
         ticks_t ticks = get_ticks();
-        if (ticks.nanos - last_force_flush_time_.nanos > 5 * BILLION) {
+        if (ticks - last_force_flush_time_ > seconds_t{5}) {
             last_force_flush_time_ = ticks;
-            page_cache_->begin_flush_pending_txns(true, ticks_t{0});
+            page_cache_->begin_flush_pending_txns(true, ticks_t::zero());
         }
     }
 

@@ -356,8 +356,8 @@ public:
 };
 
 /* We wait for no more than 10 seconds between polls to the indexes. */
-int64_t initial_poll_ms = 50;
-int64_t max_poll_ms = 10000;
+milli_t initial_poll_ms{50};
+milli_t max_poll_ms = seconds_t{10};
 
 class sindex_wait_term_t : public op_term_t {
 public:
@@ -372,7 +372,7 @@ public:
         }
         // Start with initial_poll_ms, then double the waiting period after each
         // attempt up to a maximum of max_poll_ms.
-        int64_t current_poll_ms = initial_poll_ms;
+        auto current_poll_ms = initial_poll_ms;
         for (;;) {
             std::map<std::string, std::pair<sindex_config_t, sindex_status_t> >
                 configs_and_statuses;

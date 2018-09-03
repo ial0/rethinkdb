@@ -1632,9 +1632,9 @@ std::vector<counted_t<block_token_t>> page_cache_t::do_write_blocks(
         blocks_written_cb.wait();
 
         ticks_t after = get_ticks();
-        ticks_t duration{after.nanos - before.nanos};
+        ticks_t duration{after - before};
 
-        if (after.nanos < soft_deadline.nanos) {
+        if (after < soft_deadline) {
             /* Our naptime algo is kind of hacky.
             (Assuming equal block sizes, because whatever.)
             - Proportion written is (end_pos - pos) / (size - pos).
@@ -1654,18 +1654,18 @@ std::vector<counted_t<block_token_t>> page_cache_t::do_write_blocks(
             The units match.
             */
 
-            ticks_t wakeup_time{int64_t((soft_deadline.nanos - before.nanos) * (end_pos - pos) / (write_infos.size() - pos))};
+            ticks_t wakeup_time{(soft_deadline - before) * (end_pos - pos) / (write_infos.size() - pos)};
 
-            if (wakeup_time.nanos > duration.nanos) {
-                int64_t naptime = wakeup_time.nanos - duration.nanos;
+            if (wakeup_time > duration) {
+                auto naptime = wakeup_time - duration;
                 // But don't nap more than 7/8 of the time.  We'll finish our smear early.
-                naptime = std::min<int64_t>(naptime, duration.nanos * 7);
+                naptime = std::min(naptime, duration * 7);
 
                 // This smearing logic is so bad.  Much nicer would be if we could
                 // update the priority of writes in-flight.  I don't know if anything is
                 // stopping that, it would take some engineering time.
 
-                nap(naptime / MILLION);
+                nap(time_cast<milli_t>(naptime));
             } else {
                 // We're not flushing fast enough to keep up with our smear interval.
                 // That's okay.

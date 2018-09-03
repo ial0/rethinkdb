@@ -65,7 +65,7 @@ private:
 
     // Timer to trigger worker deallocation.
     repeating_timer_t dealloc_timer;
-    static const int64_t DEALLOC_TIMER_FREQ_MS = 2000;
+    static constexpr milli_t DEALLOC_TIMER_FREQ_MS{2000};
 
     // Worker deallocation timer callback.
     void on_ring();

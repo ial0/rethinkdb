@@ -73,7 +73,7 @@
 #define RETHINKDB_REPL_SCRIPT "rethinkdb-repl"
 
 namespace cluster_defaults {
-const int reconnect_timeout = (24 * 60 * 60);    // 24 hours (in secs)
+const seconds_t reconnect_timeout = seconds_t(24 * 60 * 60);    // 24 hours (in secs)
 }  // namespace cluster_defaults
 
 MUST_USE bool numwrite(const char *path, int number) {
@@ -438,33 +438,33 @@ std::string get_web_path(const std::map<std::string, options::values_t> &opts) {
     return std::string();
 }
 
-optional<int> parse_join_delay_secs_option(
+optional<seconds_t> parse_join_delay_secs_option(
         const std::map<std::string, options::values_t> &opts) {
     if (exists_option(opts, "--join-delay")) {
         const std::string delay_opt = get_single_option(opts, "--join-delay");
-        uint64_t join_delay_secs;
-        if (!strtou64_strict(delay_opt, 10, &join_delay_secs)) {
+        int64_t join_delay_secs;
+        if (!strtoi64_strict(delay_opt, 10, &join_delay_secs)) {
             throw std::runtime_error(strprintf(
                     "ERROR: join-delay should be a number, got '%s'",
                     delay_opt.c_str()));
         }
-        if (join_delay_secs > static_cast<uint64_t>(std::numeric_limits<int>::max())) {
+        if (join_delay_secs > static_cast<int64_t>(std::numeric_limits<int>::max())) {
             throw std::runtime_error(strprintf(
                     "ERROR: join-delay is too large. Must be at most %d",
                     std::numeric_limits<int>::max()));
         }
-        return optional<int>(static_cast<int>(join_delay_secs));
+        return optional<seconds_t>(seconds_t{join_delay_secs});
     } else {
-        return optional<int>();
+        return optional<seconds_t>();
     }
 }
 
-optional<int> parse_node_reconnect_timeout_secs_option(
+optional<seconds_t> parse_node_reconnect_timeout_secs_option(
         const std::map<std::string, options::values_t> &opts) {
     if (exists_option(opts, "--cluster-reconnect-timeout")) {
         const std::string timeout_opt = get_single_option(opts, "--cluster-reconnect-timeout");
-        uint64_t node_reconnect_timeout_secs;
-        if (!strtou64_strict(timeout_opt, 10, &node_reconnect_timeout_secs)) {
+        int64_t node_reconnect_timeout_secs;
+        if (!strtoi64_strict(timeout_opt, 10, &node_reconnect_timeout_secs)) {
             throw std::runtime_error(strprintf(
                     "ERROR: cluster-reconnect-timeout should be a number, got '%s'",
                     timeout_opt.c_str()));
@@ -475,10 +475,10 @@ optional<int> parse_node_reconnect_timeout_secs_option(
                 "ERROR: cluster-reconnect-timeout is too large. Must be at most %d",
                 std::numeric_limits<int>::max() / 1000));
         }
-        return optional<int>(static_cast<int>(node_reconnect_timeout_secs));
+        return optional<seconds_t>(seconds_t{node_reconnect_timeout_secs});
     }
 
-    return optional<int>();
+    return optional<seconds_t>();
 }
 
 /* An empty outer `optional` means the `--cache-size` parameter is not present. An
@@ -1618,7 +1618,7 @@ options::help_section_t get_network_options(const bool join_required, std::vecto
 
     options_out->push_back(options::option_t(options::names_t("--cluster-reconnect-timeout"),
                                              options::OPTIONAL,
-                                             strprintf("%d", cluster_defaults::reconnect_timeout)));
+                                             strprintf("%ld", cluster_defaults::reconnect_timeout.count())));
     help.add("--cluster-reconnect-timeout seconds", "maximum number of seconds to "
                                                     "attempt reconnecting to a server "
                                                     "before giving up, the default is "
@@ -2062,8 +2062,8 @@ int main_rethinkdb_serve(int argc, char *argv[]) {
         optional<optional<uint64_t> > total_cache_size =
             parse_total_cache_size_option(opts);
 
-        optional<int> join_delay_secs = parse_join_delay_secs_option(opts);
-        optional<int> node_reconnect_timeout_secs =
+        optional<seconds_t> join_delay_secs = parse_join_delay_secs_option(opts);
+        optional<seconds_t> node_reconnect_timeout_secs =
             parse_node_reconnect_timeout_secs_option(opts);
 
         // Open and lock the directory, but do not create it
@@ -2105,7 +2105,7 @@ int main_rethinkdb_serve(int argc, char *argv[]) {
                                 address_ports,
                                 get_optional_option(opts, "--config-file"),
                                 std::vector<std::string>(argv, argv + argc),
-                                join_delay_secs.value_or(0),
+                                join_delay_secs.value_or(seconds_t{0}),
                                 node_reconnect_timeout_secs.value_or(cluster_defaults::reconnect_timeout),
                                 tls_configs);
 
@@ -2164,8 +2164,8 @@ int main_rethinkdb_proxy(int argc, char *argv[]) {
             return EXIT_FAILURE;
         }
 
-        optional<int> join_delay_secs = parse_join_delay_secs_option(opts);
-        optional<int> node_reconnect_timeout_secs =
+        auto join_delay_secs = parse_join_delay_secs_option(opts);
+        auto node_reconnect_timeout_secs =
             parse_node_reconnect_timeout_secs_option(opts);
 
 #ifndef _WIN32
@@ -2208,7 +2208,7 @@ int main_rethinkdb_proxy(int argc, char *argv[]) {
                                 address_ports,
                                 get_optional_option(opts, "--config-file"),
                                 std::vector<std::string>(argv, argv + argc),
-                                join_delay_secs.value_or(0),
+                                join_delay_secs.value_or(seconds_t::zero()),
                                 node_reconnect_timeout_secs.value_or(cluster_defaults::reconnect_timeout),
                                 tls_configs);
 
@@ -2330,8 +2330,8 @@ int main_rethinkdb_porcelain(int argc, char *argv[]) {
 
         update_check_t do_update_checking = parse_update_checking_option(opts);
 
-        optional<int> join_delay_secs = parse_join_delay_secs_option(opts);
-        optional<int> node_reconnect_timeout_secs =
+        auto join_delay_secs = parse_join_delay_secs_option(opts);
+        auto node_reconnect_timeout_secs =
             parse_node_reconnect_timeout_secs_option(opts);
 
         // Attempt to create the directory early so that the log file can use it.
@@ -2398,7 +2398,7 @@ int main_rethinkdb_porcelain(int argc, char *argv[]) {
                                 address_ports,
                                 get_optional_option(opts, "--config-file"),
                                 std::vector<std::string>(argv, argv + argc),
-                                join_delay_secs.value_or(0),
+                                join_delay_secs.value_or(seconds_t::zero()),
                                 node_reconnect_timeout_secs.value_or(cluster_defaults::reconnect_timeout),
                                 tls_configs);
 

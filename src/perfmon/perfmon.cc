@@ -74,7 +74,7 @@ perfmon_sampler_t::perfmon_sampler_t(ticks_t _length, bool _include_rate)
 {
     for (int i = 0; i < MAX_THREADS; i++) {
         // TODO: Why is current_interval an int?
-        thread_data[i].current_interval = get_ticks().nanos / length.nanos;
+        thread_data[i].current_interval = get_ticks() / length;
     }
 }
 
@@ -84,7 +84,7 @@ perfmon_sampler_t::~perfmon_sampler_t() {
 
 void perfmon_sampler_t::update(ticks_t now) {
     // TODO: Why is this an int?
-    int interval = now.nanos / length.nanos;
+    int interval = now / length;
     rassert(get_thread_id().threadnum >= 0);
     thread_info_t *thread = &thread_data[get_thread_id().threadnum];
 
@@ -142,7 +142,7 @@ ql::datum_t perfmon_sampler_t::output_stat(const stats_t &aggregated) {
 
     if (include_rate) {
         builder.overwrite(stat_per_sec,
-                          ql::datum_t(aggregated.count / ticks_to_secs(length)));
+                          ql::datum_t(aggregated.count / time_cast<datum_seconds_t>(length).count()  ));
     }
 
     return std::move(builder).to_datum();
@@ -247,13 +247,13 @@ perfmon_rate_monitor_t::perfmon_rate_monitor_t(ticks_t _length)
     : perfmon_perthread_t<double>(), length(_length)
 {
     for (int i = 0; i < MAX_THREADS; i++) {
-        thread_data[i].value.current_interval = get_ticks().nanos / length.nanos;
+        thread_data[i].value.current_interval = get_ticks() / length;
     }
 }
 
 void perfmon_rate_monitor_t::update(ticks_t now) {
     // TODO: Why is this an int?
-    int interval = now.nanos / length.nanos;
+    int interval = now / length;
     rassert(get_thread_id().threadnum >= 0);
     thread_info_t &thread = thread_data[get_thread_id().threadnum].value;
 
@@ -283,7 +283,7 @@ void perfmon_rate_monitor_t::get_thread_stat(double *stat) {
     ticks_t now = get_ticks();
     update(now);
 
-    double ratio = 1.0 - (static_cast<double>(now.nanos % length.nanos) / length.nanos);
+    double ratio = 1.0 - (static_cast<double>((now % length).count()) / length.count());
 
     // Return a rolling average of the current count plus the last count
     thread_info_t &thread = thread_data[get_thread_id().threadnum].value;
@@ -299,7 +299,7 @@ double perfmon_rate_monitor_t::combine_stats(const double *stats) {
 }
 
 ql::datum_t perfmon_rate_monitor_t::output_stat(const double &stat) {
-    return ql::datum_t(stat / ticks_to_secs(length));
+    return ql::datum_t(stat / time_cast<datum_seconds_t>(length).count());
 }
 
 perfmon_duration_sampler_t::perfmon_duration_sampler_t(ticks_t length, bool _ignore_global_full_perfmon)
@@ -322,8 +322,8 @@ void perfmon_duration_sampler_t::begin(ticks_t *v) {
 
 void perfmon_duration_sampler_t::end(ticks_t *v) {
     --active;
-    if (v->nanos != 0) {
-        recent.record(ticks_to_secs(ticks_t{get_ticks().nanos - v->nanos}));
+    if (*v != ticks_t::zero()) {
+        recent.record(time_cast<datum_seconds_t>(get_ticks() - *v).count());
     }
 }
 

@@ -6,7 +6,7 @@
 #include "rdb_protocol/env.hpp"
 
 /* We destroy the machinery if there have been no changefeeds for this many seconds */
-static const int machinery_expiration_secs = 60;
+static const seconds_t machinery_expiration_secs{60};
 
 void cfeed_artificial_table_backend_t::machinery_t::send_all_change(
         const new_mutex_acq_t *proof,
@@ -30,7 +30,7 @@ void cfeed_artificial_table_backend_t::machinery_t::send_all_stop() {
 
 void cfeed_artificial_table_backend_t::machinery_t::maybe_remove() {
     assert_thread();
-    last_subscriber_time = get_kiloticks();
+    last_subscriber_time = clock_monotonic();
     /* The `cfeed_artificial_table_backend_t` has a repeating timer that will eventually
     clean us up */
 }
@@ -43,7 +43,7 @@ cfeed_artificial_table_backend_t::cfeed_artificial_table_backend_t(
       m_name_resolver(name_resolver),
       begin_destruction_was_called(false),
       remove_machinery_timer(
-        machinery_expiration_secs * THOUSAND,
+        machinery_expiration_secs,
         [this]() { maybe_remove_machinery(); }) {
 }
 
@@ -150,8 +150,8 @@ void cfeed_artificial_table_backend_t::maybe_remove_machinery() {
     for (auto &machinery : machineries) {
         if (machinery.second.has() &&
                 machinery.second->can_be_removed() &&
-                machinery.second->last_subscriber_time.micros +
-                    machinery_expiration_secs * MILLION < get_kiloticks().micros) {
+                machinery.second->last_subscriber_time +
+                    machinery_expiration_secs < clock_monotonic()) {
             auth::user_context_t user_context = machinery.first;
             auto_drainer_t::lock_t keepalive(&drainer);
             coro_t::spawn_sometime([this, user_context, keepalive /* important to capture */]() {

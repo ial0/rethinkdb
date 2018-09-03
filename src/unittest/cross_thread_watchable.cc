@@ -26,7 +26,7 @@ TPTEST(CrossThreadWatchable, CrossThreadWatchableTest) {
             {
                 on_thread_t switcher((threadnum_t(1)));
                 signal_timer_t timer;
-                timer.start(5000);
+                timer.start(seconds_t{5});
                 ctw.get_watchable()->run_until_satisfied(
                         [expected_value](int b) -> bool { return expected_value == b; },
                         &timer);
@@ -45,7 +45,7 @@ TPTEST(CrossThreadWatchable, CrossThreadWatchableTest) {
             {
                 on_thread_t switcher((threadnum_t(1)));
                 signal_timer_t timer;
-                timer.start(5000);
+                timer.start(seconds_t{5});
                 ctw.get_watchable()->run_until_satisfied(
                         [expected_value](int b) -> bool { return expected_value == b; },
                         &timer);

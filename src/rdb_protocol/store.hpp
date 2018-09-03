@@ -361,12 +361,12 @@ public:
     namespace_id_t const &get_table_id() const;
 
     // The `double` is the progress of the secondary index construction.
-    typedef std::map<uuid_u, std::pair<microtime_t, double const *> >
+    typedef std::map<uuid_u, std::pair<realtime_t, double const *> >
         sindex_context_map_t;
     sindex_context_map_t *get_sindex_context_map();
 
     double get_sindex_progress(uuid_u const &id);
-    microtime_t get_sindex_start_time(uuid_u const &id);
+    realtime_t get_sindex_start_time(uuid_u const &id);
 
     fifo_enforcer_source_t main_token_source, sindex_token_source;
     fifo_enforcer_sink_t main_token_sink, sindex_token_sink;

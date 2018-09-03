@@ -72,7 +72,7 @@ void jobs_manager_t::on_get_job_reports(
     // Note, as `time` (or `kticks`) is retrieved here a job may actually report to be
     // started after fetching the time, leading to a negative duration which we round to
     // zero.
-    microtime_t time = current_microtime();
+    auto time = clock_realtime();
     // We have some microtime_t values and we also have some kiloticks_t values.
     kiloticks_t kticks = get_kiloticks();
 
@@ -96,7 +96,7 @@ void jobs_manager_t::on_get_job_reports(
 
                     query_job_reports_inner.emplace_back(
                         pair.second->job_id,
-                        kticks.micros - std::min(pair.second->start_time.micros, kticks.micros),
+                        time - std::min(pair.second->start_time, time),
                         server_id,
                         query_cache->get_client_addr_port(),
                         std::move(render),
@@ -115,7 +115,7 @@ void jobs_manager_t::on_get_job_reports(
         // Note that "disk_compaction" jobs do not have a duration.
         disk_compaction_job_reports.emplace_back(
             uuid_u::from_hash(base_disk_compaction_id, uuid_to_str(server_id.get_uuid())),
-            -1,
+            datum_milli_t{-1},
             server_id);
     }
 
@@ -132,9 +132,9 @@ void jobs_manager_t::on_get_job_reports(
 
                 /* Note that we only calculate the duration if the index construction is
                    still in progress. */
-                double duration = status.second.second.ready
-                    ? 0.0
-                    : time - std::min<double>(status.second.second.start_time, time);
+                auto duration = status.second.second.ready
+                    ? datum_micro_t::zero()
+                    : to_datum_time<datum_micro_t>(time - std::min(status.second.second.start_time, time));
 
                 index_construction_job_reports.emplace_back(
                     id,
@@ -157,9 +157,9 @@ void jobs_manager_t::on_get_job_reports(
 
                 /* As above we only calculate the duration if the backfill is still in
                    progress. */
-                double duration = backfill.second.is_ready
-                    ? 0.0
-                    : time - std::min<double>(backfill.second.start_time, time);
+                auto duration = backfill.second.is_ready
+                    ? datum_micro_t::zero()
+                    : to_datum_time<datum_micro_t>(time - std::min(backfill.second.start_time, time));
 
                 backfill_job_reports.emplace_back(
                     id,

@@ -4,43 +4,159 @@
 #include <stdint.h>
 #include <time.h>
 
+#include <chrono>
+
+#include "version.hpp"
+#include "containers/archive/archive.hpp"
+
+
+
+using monotonic_t = std::chrono::steady_clock::time_point;
+using timespec_t = std::chrono::system_clock::time_point;
+using realtime_t = std::chrono::system_clock::time_point;
+
 // Monotonic timer.  USE THIS!
-timespec clock_monotonic();
+inline  auto clock_monotonic()
+{
+    return std::chrono::steady_clock::now();
+}
 
-// get_ticks() is a wrapper around clock_monotonic() which returns a straight-up 64-bit
-// nanosecond counter.
-struct ticks_t {
-    int64_t nanos;
-};
-ticks_t get_ticks();
+inline auto clock_realtime()
+{
+    return std::chrono::system_clock::now();
+}
 
-// get_kiloticks() is get_ticks() / 1000.  Used in migrating from legacy wall-clock
-// current_microtime().
-struct kiloticks_t {
-    int64_t micros;
-};
-kiloticks_t get_kiloticks();
+inline time_t clock_to_time(timespec_t t)
+{
+    return std::chrono::system_clock::to_time_t(t);
+}
 
-// Real-time wallclock timer.  Non-monotonic, could step backwards or forwards.  Don't
-// use this, unless you want to use this.
-timespec clock_realtime();
+inline timespec_t time_to_clock(time_t t)
+{
+    return std::chrono::system_clock::from_time_t(t);
+}
 
-void add_to_timespec(timespec *ts, int32_t nanoseconds);
-timespec subtract_timespecs(const timespec &t1, const timespec &t2);
-bool operator<(const struct timespec &t1, const struct timespec &t2);
-bool operator>(const struct timespec &t1, const struct timespec &t2);
-bool operator<=(const struct timespec &t1, const struct timespec &t2);
-bool operator>=(const struct timespec &t1, const struct timespec &t2);
+template <cluster_version_t W>
+void serialize(write_message_t *wm, const realtime_t &s) {
+    serialize<W>(wm,  std::chrono::duration_cast<std::chrono::seconds>(s.time_since_epoch()));
+}
 
-ticks_t secs_to_ticks(time_t secs);
-double ticks_to_secs(ticks_t ticks);
+template <cluster_version_t W>
+MUST_USE archive_result_t deserialize(read_stream_t *s, realtime_t *p) {
+    std::chrono::seconds d;
+    archive_result_t res = deserialize<W>(s, &d);
+    if (bad(res)) { return res; }
+    *p = realtime_t{std::chrono::seconds{d}};
+    return res;
+}
 
-// Wall-clock time in seconds.
-time_t get_realtime_secs();
+template <cluster_version_t W>
+void serialize(write_message_t *wm, const monotonic_t &s) {
+    serialize<W>(wm,  std::chrono::duration_cast<std::chrono::seconds>(s.time_since_epoch()));
+}
 
-// Wall-clock time in microseconds.
-typedef uint64_t microtime_t;
-microtime_t current_microtime();
+template <cluster_version_t W>
+MUST_USE archive_result_t deserialize(read_stream_t *s, monotonic_t *p) {
+    std::chrono::seconds d;
+    archive_result_t res = deserialize<W>(s, &d);
+    if (bad(res)) { return res; }
+    *p = monotonic_t{std::chrono::seconds{d}};
+    return res;
+}
+
+using microtime_t = std::chrono::duration<uint64_t, std::micro>;
+
+using ticks_t = std::chrono::duration<int64_t, std::nano>;
+
+using seconds_t = std::chrono::duration<int64_t>;
+using minute_t = std::chrono::duration<int64_t, std::ratio<60,1>>;
+using milli_t = std::chrono::duration<int64_t, std::milli>;
+using micro_t = std::chrono::duration<int64_t, std::micro>;
+using nano_t = std::chrono::duration<int64_t, std::nano>;
+
+using datum_seconds_t = std::chrono::duration<double>;
+using datum_milli_t = std::chrono::duration<double, std::milli>;
+using datum_micro_t = std::chrono::duration<double, std::micro>;
+
+namespace cpp14 {
+
+template <class To, class Rep, class Period>
+constexpr To ceil(const std::chrono::duration<Rep, Period>& d)
+{
+    To t = std::chrono::duration_cast<To>(d);
+    if (t < d)
+        return t + To{1};
+    return t;
+}
+
+}
+
+template <cluster_version_t W, typename R>
+void serialize(write_message_t *wm, const std::chrono::duration<double, R> &s) {
+    serialize<W>(wm, s.count());
+}
+
+template <cluster_version_t W, typename R>
+MUST_USE archive_result_t deserialize(read_stream_t *s, std::chrono::duration<double, R> *p) {
+    double d;
+    archive_result_t res = deserialize<W>(s, &d);
+    if (bad(res)) { return res; }
+    *p = datum_milli_t{d};
+    return res;
+}
+
+template <cluster_version_t W, typename R>
+void serialize(write_message_t *wm, const std::chrono::duration<int64_t, R> &s) {
+    serialize<W>(wm, s.count());
+}
+
+template <cluster_version_t W, typename R>
+MUST_USE archive_result_t deserialize(read_stream_t *s, std::chrono::duration<int64_t, R> *p) {
+    int64_t d;
+    archive_result_t res = deserialize<W>(s, &d);
+    if (bad(res)) { return res; }
+    *p = std::chrono::duration<int64_t, R>{d};
+    return res;
+}
+
+using kiloticks_t = std::chrono::duration<int64_t, std::micro>;
+
+inline ticks_t remaining_nanos(timespec_t t) {
+    return t.time_since_epoch() - std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch()) ;
+}
+
+inline ticks_t get_ticks() {
+    return std::chrono::steady_clock::now().time_since_epoch();
+}
+
+inline kiloticks_t get_kiloticks() {
+    return std::chrono::duration_cast<kiloticks_t>(std::chrono::steady_clock::now().time_since_epoch());
+}
+
+template <typename T, typename A>
+inline auto tick_floor(A t)
+{
+    return std::chrono::duration_cast<T>(t);
+}
+
+template<typename T, typename P, typename R>
+inline constexpr auto time_cast(std::chrono::duration<P,R> ticks)
+{
+   return std::chrono::duration_cast<T>(ticks);
+}
+
+
+template <typename T>
+T from_datum_time(datum_micro_t ticks)
+{
+    return std::chrono::duration_cast<T>(ticks);
+}
+
+template <typename T>
+T to_datum_time(ticks_t ticks)
+{
+    return std::chrono::duration_cast<T>(ticks);
+}
 
 
 #endif  // TIME_HPP_

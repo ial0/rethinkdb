@@ -168,7 +168,7 @@ public:
 
     /* Each phase of the backfill will be allowed to run for a random time between
     `min_preempt_ms` and `max_preempt_ms` before being preempted. */
-    int min_preempt_ms, max_preempt_ms;
+    milli_t min_preempt_ms, max_preempt_ms;
 
     /* This controls the queue sizes, etc. in the backfill logic. */
     backfill_config_t backfill;
@@ -191,8 +191,8 @@ private:
         auto_drainer_t::lock_t keepalive(drainers[lock].get());
         coro_t::spawn_sometime([this, lock, keepalive   /* important to capture */]() {
             try {
-                int time = config.min_preempt_ms +
-                    randint(config.max_preempt_ms - config.min_preempt_ms + 1);
+                auto time = config.min_preempt_ms +
+                    milli_t{randint((config.max_preempt_ms - config.min_preempt_ms + milli_t{1}).count())};
                 nap(time, keepalive.get_drain_signal());
                 preempt(lock);
             } catch (const interrupted_exc_t &) {
@@ -497,7 +497,7 @@ TPTEST(RDBBackfill, FillItemQueue) {
     cfg.backfill.item_queue_mem_size = 1;
     cfg.backfill.item_chunk_mem_size = 1;
     cfg.backfill.pre_item_queue_mem_size = GIGABYTE;
-    cfg.min_preempt_ms = cfg.max_preempt_ms = 60 * 60 * 1000;
+    cfg.min_preempt_ms = cfg.max_preempt_ms = seconds_t{60 * 60};
     /* Since the item queue will stall a lot, this backfill will be much slower than
     normal; so we backfill fewer items to speed up the test. */
     cfg.num_initial_writes = 100;
@@ -512,7 +512,7 @@ TPTEST(RDBBackfill, FillPreItemQueue) {
     cfg.backfill.pre_item_queue_mem_size = 1;
     cfg.backfill.pre_item_chunk_mem_size = 1;
     cfg.backfill.item_queue_mem_size = GIGABYTE;
-    cfg.min_preempt_ms = cfg.max_preempt_ms = 60 * 60 * 1000;
+    cfg.min_preempt_ms = cfg.max_preempt_ms = seconds_t{60 * 60};
     /* Since the pre-item queue will stall a lot, this backfill will be much slower than
     normal; so we backfill fewer items to speed up the test. */
     cfg.num_initial_writes = 100;
@@ -524,7 +524,7 @@ TPTEST(RDBBackfill, PreemptOften) {
     /* Force the backfill to be preempted after every single backfill item, just to
     stress the system */
     backfill_test_config_t cfg;
-    cfg.min_preempt_ms = cfg.max_preempt_ms = 0;
+    cfg.min_preempt_ms = cfg.max_preempt_ms = milli_t::zero();
     run_backfill_test(cfg);
 }
 
@@ -536,7 +536,7 @@ TPTEST(RDBBackfill, FillBothQueuesAndPreemptOften) {
     cfg.backfill.item_chunk_mem_size = 1;
     cfg.backfill.pre_item_queue_mem_size = 1;
     cfg.backfill.pre_item_chunk_mem_size = 1;
-    cfg.min_preempt_ms = cfg.max_preempt_ms = 0;
+    cfg.min_preempt_ms = cfg.max_preempt_ms = milli_t::zero();
     /* Speed up the test by backfilling fewer items */
     cfg.num_initial_writes = 100;
     cfg.num_step_writes = 10;

@@ -28,7 +28,7 @@ dummy_raft_cluster_t::dummy_raft_cluster_t(
         std::vector<raft_member_id_t> *member_ids_out) :
     mailbox_manager(&connectivity_cluster, 'M'),
     connectivity_cluster_run(&connectivity_cluster),
-    check_invariants_timer(100, [this]() {
+    check_invariants_timer(milli_t{100}, [this]() {
         coro_t::spawn_sometime(std::bind(
             &dummy_raft_cluster_t::check_invariants,
             this,
@@ -155,12 +155,12 @@ raft_member_id_t dummy_raft_cluster_t::find_leader(signal_t *interruptor) {
             }
         }
         signal_timer_t timer;
-        timer.start(10);
+        timer.start(milli_t{10});
         wait_interruptible(&timer, interruptor);
     }
 }
 
-raft_member_id_t dummy_raft_cluster_t::find_leader(int timeout) {
+raft_member_id_t dummy_raft_cluster_t::find_leader(milli_t timeout) {
     signal_timer_t timer;
     timer.start(timeout);
     try {
@@ -337,7 +337,7 @@ void dummy_raft_cluster_t::member_info_t::block() {
     }
     if (randint(10) == 0) {
         signal_timer_t timer;
-        timer.start(randint(30));
+        timer.start(milli_t{randint(30)});
         timer.wait_lazily_unordered();
     }
 }
@@ -377,7 +377,7 @@ size_t dummy_raft_traffic_generator_t::get_num_changes() {
 }
 
 void dummy_raft_traffic_generator_t::check_changes_present() {
-    raft_member_id_t leader = cluster->find_leader(60000);
+    raft_member_id_t leader = cluster->find_leader(seconds_t{60});
     cluster->run_on_member(leader, [&](dummy_raft_member_t *m, signal_t *) {
         std::set<uuid_u> all_changes;
         for (const uuid_u &change : m->get_committed_state()->get().state.state) {
@@ -406,9 +406,9 @@ void dummy_raft_traffic_generator_t::do_changes(auto_drainer_t::lock_t keepalive
     }
 }
 
-void do_writes_raft(dummy_raft_cluster_t *cluster, int expect, int ms) {
+void do_writes_raft(dummy_raft_cluster_t *cluster, int expect, milli_t ms) {
 #ifdef ENABLE_RAFT_DEBUG
-    RAFT_DEBUG("begin do_writes(%d, %d)\n", expect, ms);
+    RAFT_DEBUG("begin do_writes(%d, %d)\n", expect, ms.count());
     kiloticks_t start = get_kiloticks();
 #endif /* ENABLE_RAFT_DEBUG */
 
@@ -436,9 +436,9 @@ void do_writes_raft(dummy_raft_cluster_t *cluster, int expect, int ms) {
         });
     } catch (const interrupted_exc_t &) {
         ADD_FAILURE() << "completed only " << committed_changes.size() << "/" << expect
-            << " changes in " << ms << "ms";
+            << " changes in " << ms.count() << "ms";
     }
-    RAFT_DEBUG("end do_writes() in %" PRIu64 "ms\n", (get_kiloticks().micros - start.micros) / 1000);
+    RAFT_DEBUG("end do_writes() in %" PRIu64 "ms\n", time_cast<milli_t>(get_kiloticks() - start).count());
 }
 
 }   /* namespace unittest */

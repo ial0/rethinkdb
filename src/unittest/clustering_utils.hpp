@@ -205,7 +205,7 @@ private:
             for (;;) {
                 if (keepalive.get_drain_signal()->is_pulsed()) throw interrupted_exc_t();
                 insert_one();
-                nap(10, keepalive.get_drain_signal());
+                nap(milli_t{10}, keepalive.get_drain_signal());
             }
         } catch (const interrupted_exc_t &) {
             /* Break out of loop */
@@ -249,7 +249,7 @@ public:
                                  server_id,
                                  get_unittest_addresses(),
                                  peer_address_t(),
-                                 0,
+                                 seconds_t::zero(),
                                  ANY_PORT,
                                  0,
                                  heartbeat_manager.get_view(),
@@ -264,7 +264,7 @@ public:
     }
     void connect(simple_mailbox_cluster_t *other) {
         connectivity_cluster_run.join(
-            get_cluster_local_address(&other->connectivity_cluster), 0);
+            get_cluster_local_address(&other->connectivity_cluster), seconds_t::zero());
     }
     void disconnect(simple_mailbox_cluster_t *other) {
         auto_drainer_t::lock_t keepalive;
@@ -290,14 +290,14 @@ public:
     explicit test_cluster_run_t(connectivity_cluster_t *c,
                                 const peer_address_t &canonical_addr = peer_address_t())
         : run(c, server_id_t::generate_server_id(),
-            get_unittest_addresses(), canonical_addr, 0, ANY_PORT, 0,
+            get_unittest_addresses(), canonical_addr, seconds_t::zero(), ANY_PORT, 0,
             heartbeat_manager.get_view(), auth_manager.get_view(), nullptr) { }
 
     operator connectivity_cluster_t::run_t&() {
         return run;
     }
 
-    void join(const peer_address_t &address, const int join_delay_secs) THROWS_NOTHING {
+    void join(const peer_address_t &address, const seconds_t join_delay_secs) THROWS_NOTHING {
         run.join(address, join_delay_secs);
     }
 

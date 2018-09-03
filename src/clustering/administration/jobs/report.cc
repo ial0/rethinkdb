@@ -25,7 +25,7 @@ disk_compaction_job_report_t::disk_compaction_job_report_t()
 
 disk_compaction_job_report_t::disk_compaction_job_report_t(
         uuid_u const &_id,
-        double _duration,
+        datum_milli_t _duration,
         server_id_t const &_server_id)
     : job_report_base_t<disk_compaction_job_report_t>(
         "disk_compaction", _id, _duration, _server_id) { }
@@ -50,7 +50,7 @@ backfill_job_report_t::backfill_job_report_t()
 
 backfill_job_report_t::backfill_job_report_t(
         uuid_u const &_id,
-        double _duration,
+        datum_milli_t _duration,
         server_id_t const &_server_id,
         namespace_id_t const &_table,
         bool _is_ready,
@@ -149,7 +149,7 @@ index_construction_job_report_t::index_construction_job_report_t()
 
 index_construction_job_report_t::index_construction_job_report_t(
         uuid_u const &_id,
-        double _duration,
+        datum_micro_t _duration,
         server_id_t const &_server_id,
         namespace_id_t const &_table,
         std::string const &_index,
@@ -223,7 +223,7 @@ query_job_report_t::query_job_report_t()
 
 query_job_report_t::query_job_report_t(
         uuid_u const &_id,
-        double _duration,
+        datum_micro_t _duration,
         server_id_t const &_server_id,
         ip_and_port_t const &_client_addr_port,
         std::string const &_query,

@@ -68,12 +68,13 @@ void resume_construct_sindex(
         store, store_keepalive.get_drain_signal());
     double current_progress =
         progress_estimator.estimate_progress(construct_range.left);
+
     map_insertion_sentry_t<
         store_t::sindex_context_map_t::key_type,
         store_t::sindex_context_map_t::mapped_type> sindex_context_sentry(
             store->get_sindex_context_map(),
             sindex_to_construct,
-            std::make_pair(current_microtime(), &current_progress));
+            std::make_pair(clock_realtime(), &current_progress));
 
     /* We start by clearing out any residual data in the index left behind by a previous
     post construction process (if the server got terminated in the middle). */

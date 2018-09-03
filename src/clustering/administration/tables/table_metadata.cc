@@ -294,26 +294,20 @@ struct get_flush_interval_visitor_t : public boost::static_visitor<flush_interva
     flush_interval_t operator()(flush_interval_never_t) const {
         return flush_interval_t{NEVER_FLUSH_INTERVAL};
     }
-    flush_interval_t operator()(double x) const {
-        rassert(x >= 0);
-        double value_ms = x * 1000;
-        if (value_ms <= 0) {
-            // The behavior of 0 is unspecified "reasonable" behavior.  For example, it
-            // could be treated the same as default (5 seconds), or whatnot.  We go with
-            // 100 ms.
-            return flush_interval_t{100};
-        }
+    flush_interval_t operator()(datum_seconds_t x) const {
+        rassert(x.count() >= 0);
+        datum_milli_t value_ms = x;
 
         // We don't want any flush interval bigger than NEVER_FLUSH_INTERVAL.  (We also
         // don't want a value in milliseconds that would overflow when converted to
         // nanoseconds.  Hence this logic here.)
-        static_assert(NEVER_FLUSH_INTERVAL == (0x100000000ll * 1000ll),
-                      "NEVER_FLUSH_INTERVAL value changed");
-        if (value_ms >= static_cast<double>(NEVER_FLUSH_INTERVAL)) {
+        //static_assert(NEVER_FLUSH_INTERVAL == (0x100000000ll * 1000ll),
+        //              "NEVER_FLUSH_INTERVAL value changed");
+        if (value_ms >= NEVER_FLUSH_INTERVAL) {
             return flush_interval_t{NEVER_FLUSH_INTERVAL};
         }
 
-        int64_t value_int = ceil(value_ms);
+        auto value_int = cpp14::ceil<milli_t>(value_ms);
         return flush_interval_t{value_int};
     }
 };

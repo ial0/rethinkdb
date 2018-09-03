@@ -112,7 +112,7 @@ public:
         progress_denominator(0),
         ready(true),
         outdated(false),
-        start_time(-1) { }
+        start_time(realtime_t::min()) { }
     void accum(const sindex_status_t &other);
     double progress_numerator;
     double progress_denominator;
@@ -123,7 +123,7 @@ public:
     future you can apply the same solution as in
         `void serialize(write_message_t *wm, const batchspec_t &batchspec)`,
     but that's relatively expensive. */
-    microtime_t start_time;
+    realtime_t start_time;
 };
 RDB_DECLARE_SERIALIZABLE(sindex_status_t);
 

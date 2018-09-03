@@ -84,9 +84,9 @@ class debug_timer_t {
 public:
     explicit debug_timer_t(std::string _name = "");
     ~debug_timer_t();
-    microtime_t tick(const std::string &tag);
+    micro_t tick(const std::string &tag);
 private:
-    microtime_t start, last;
+    realtime_t start, last;
     std::string name, out;
     DISABLE_COPYING(debug_timer_t);
 };

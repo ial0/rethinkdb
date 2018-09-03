@@ -45,9 +45,9 @@ void debug_print_quoted_string(printf_buffer_t *buf, const uint8_t *s, size_t n)
 #ifndef NDEBUG
 // Adds the time/thread id prefix to buf.
 void debugf_prefix_buf(printf_buffer_t *buf) {
-    struct timespec t = clock_realtime();
+    //struct timespec t = clock_realtime();
 
-    format_time(t, buf, local_or_utc_time_t::local);
+    //format_time(clock_realtime(), buf, local_or_utc_time_t::local);
 
     if (in_thread_pool()) {
         buf->appendf(" Thread %" PRIi32 ": ", get_thread_id().threadnum);
@@ -101,7 +101,7 @@ debugf_in_dtor_t::~debugf_in_dtor_t() {
 }
 
 debug_timer_t::debug_timer_t(std::string _name)
-    : start(current_microtime()), last(start), name(_name), out("\n") {
+    : start(clock_realtime()), last(start), name(_name), out("\n") {
     tick("start");
 }
 debug_timer_t::~debug_timer_t() {
@@ -112,10 +112,11 @@ debug_timer_t::~debug_timer_t() {
     fprintf(stderr, "%s", out.c_str());
 #endif // NDEBUG
 }
-microtime_t debug_timer_t::tick(const std::string &tag) {
-    microtime_t prev = last;
-    last = current_microtime();
-    out += strprintf("TIMER %s: %15s (%" PRIu64 " %12" PRIu64 " %12" PRIu64 ")\n",
-                     name.c_str(), tag.c_str(), last, last - start, last - prev);
-    return last - start;
+
+micro_t debug_timer_t::tick(const std::string &tag) {
+    auto prev = last;
+    last = clock_realtime();
+    out += strprintf("TIMER %s: %15s (%s %12" PRIu64 " %12" PRIu64 ")\n",
+                     name.c_str(), tag.c_str(), format_time(last, local_or_utc_time_t::local).c_str(), (last - start).count(), (last - prev).count());
+    return time_cast<micro_t>(last - start);
 }

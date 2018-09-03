@@ -7,12 +7,12 @@
 #include "utils.hpp"
 
 log_event_t::log_event_t(const std::string &_msg, bool log_bt)
-    : timestamp(current_microtime()), msg(_msg) {
+    : timestamp(clock_realtime()), msg(_msg) {
     if (log_bt) bt.init(new lazy_backtrace_formatter_t());
 }
 std::string log_event_t::print(bool print_bt) {
     std::string bt_str = print_bt && bt.has() ? bt->addrs() : "";
-    return strprintf("%" PRIu64 "\n -- %s\n%s", timestamp, msg.c_str(), bt_str.c_str());
+    return strprintf("%s\n -- %s\n%s", format_time(timestamp,local_or_utc_time_t::local).c_str(), msg.c_str(), bt_str.c_str());
 }
 
 activity_logger_t::activity_logger_t(bool _log_bt) : log_bt_(_log_bt) {

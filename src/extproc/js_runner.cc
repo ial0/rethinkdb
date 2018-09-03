@@ -11,6 +11,13 @@
 
 const size_t js_runner_t::CACHE_SIZE = 100;
 
+auto query_timeout_string(const char * str, const milli_t timeout)
+{
+    return strprintf(
+        "JavaScript query `%s` timed out after %" PRIu64 ".%03" PRIu64 " seconds.",
+        str, time_cast<seconds_t>(timeout).count(), (timeout % seconds_t{1}).count());
+}
+
 // This class allows us to manage timeouts in a cleaner manner
 class js_timeout_t {
 public:
@@ -18,7 +25,7 @@ public:
     //  will run the timer for the duration it is in scope
     class sentry_t {
     public:
-        sentry_t(js_timeout_t *_parent, uint64_t timeout_ms) :
+        sentry_t(js_timeout_t *_parent, milli_t timeout_ms) :
             parent(_parent) {
             if (parent->timer.is_pulsed()) {
                 throw interrupted_exc_t();
@@ -57,10 +64,10 @@ public:
 
     struct func_info_t {
         explicit func_info_t(js_id_t _id) :
-            id(_id), timestamp(get_kiloticks()) { }
+            id(_id), timestamp(clock_monotonic()) { }
 
         js_id_t id;
-        kiloticks_t timestamp;
+        monotonic_t timestamp;
     };
 
     std::map<std::string, func_info_t> id_cache;
@@ -149,9 +156,7 @@ js_result_t js_runner_t::eval(const std::string &source,
         // This outer try-catch block explicitly checks whether it was an
         // `interrupted_exc_t`, and if so deals with the timeout if set.
         if (is_timeout) {
-            return strprintf(
-                "JavaScript query `%s` timed out after %" PRIu64 ".%03" PRIu64 " seconds.",
-                source.c_str(), config.timeout_ms / 1000, config.timeout_ms % 1000);
+            return query_timeout_string(source.c_str(), config.timeout_ms);
         } else {
             throw;
         }
@@ -208,9 +213,7 @@ js_result_t js_runner_t::call(const std::string &source,
         // This outer try-catch block explicitly checks whether it was an
         // `interrupted_exc_t`, and if so deals with the timeout if set.
         if (is_timeout) {
-            return strprintf(
-                "JavaScript query `%s` timed out after %" PRIu64 ".%03" PRIu64 " seconds.",
-                source.c_str(), config.timeout_ms / 1000, config.timeout_ms % 1000);
+            return query_timeout_string(source.c_str(), config.timeout_ms);
         } else {
             throw;
         }
@@ -250,7 +253,7 @@ void js_runner_t::trim_cache() {
 
     auto oldest_func = job_data->id_cache.begin();
     for (auto it = ++job_data->id_cache.begin(); it != job_data->id_cache.end(); ++it) {
-        if (it->second.timestamp.micros < oldest_func->second.timestamp.micros) {
+        if (it->second.timestamp < oldest_func->second.timestamp) {
             oldest_func = it;
         }
     }

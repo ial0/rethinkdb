@@ -37,7 +37,7 @@ server_status_artificial_table_backend_t::server_status_artificial_table_backend
                 connect_times.erase(peer);
             } else {
                 if (connect_times.count(peer) == 0) {
-                    connect_times.insert(std::make_pair(peer, current_microtime()));
+                    connect_times.emplace(peer, clock_realtime());
                 }
             }
         }, initial_call_t::YES) {
@@ -147,7 +147,7 @@ bool server_status_artificial_table_backend_t::format_row(
                 convert_microtime_to_datum(conn_time_it->second));
         } else {
             net_builder.overwrite("time_connected",
-                convert_microtime_to_datum(current_microtime()));
+                convert_microtime_to_datum(clock_realtime()));
         }
     }
     builder.overwrite("network", std::move(net_builder).to_datum());

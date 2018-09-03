@@ -13,6 +13,8 @@
 #include <sys/types.h>
 #include <google/protobuf/stubs/common.h>
 
+#include <sstream>
+
 #ifdef _WIN32
 #include "windows.hpp"
 #include <io.h>     // NOLINT
@@ -25,6 +27,9 @@
 #include <sys/resource.h>
 #include <ftw.h>
 #endif  // _WIN32
+
+#include <sstream>
+#include <sstream>
 
 #include "errors.hpp"
 #include <boost/date_time.hpp>
@@ -169,10 +174,11 @@ void print_hexdump(const void *vbuf, size_t offset, size_t ulength) {
 #endif
 }
 
-void format_time(struct timespec time, printf_buffer_t *buf, local_or_utc_time_t zone) {
-    struct tm t;
+/*
+void format_time(std::time_t time, printf_buffer_t *buf, local_or_utc_time_t zone) {
+    struct tm *t;
     if (zone == local_or_utc_time_t::utc) {
-        boost::posix_time::ptime as_ptime = boost::posix_time::from_time_t(time.tv_sec);
+        boost::posix_time::ptime as_ptime = boost::posix_time::from_time_t(time);
         t = boost::posix_time::to_tm(as_ptime);
     } else {
 #ifdef _WIN32
@@ -194,11 +200,35 @@ void format_time(struct timespec time, printf_buffer_t *buf, local_or_utc_time_t
         t.tm_sec,
         time.tv_nsec);
 }
+*/
 
-std::string format_time(struct timespec time, local_or_utc_time_t zone) {
-    printf_buffer_t buf;
-    format_time(time, &buf, zone);
-    return std::string(buf.c_str());
+std::string format_time(timespec_t time, local_or_utc_time_t zone) {
+    std::stringstream time_str;
+    std::time_t t = clock_to_time(time);
+    if (zone == local_or_utc_time_t::utc)
+        time_str << std::put_time(std::gmtime(&t), "%Y-%m-%dT%H:%M:%S.");
+    else
+        time_str << std::put_time(std::localtime(&t), "%Y-%m-%dT%H:%M:%S.");
+    time_str << std::setfill('0') << std::setw(9) << remaining_nanos(time).count();
+    
+    return time_str.str();
+}
+
+timespec_t parse_time(const std::string &str, local_or_utc_time_t zone, std::string *errmsg_out)
+{
+    std::istringstream ss(str);
+    int64_t n;
+    std::tm tm;
+    
+    ss >> std::get_time(&tm,"%Y-%m-%dT%H:%M:%S.") >> n;
+    if (ss.bad()) {
+        *errmsg_out = "badly formatted time";
+        return realtime_t::min();
+    }
+    tm.tm_isdst =  zone == local_or_utc_time_t::utc ? 0 : -1;
+    auto clk = time_to_clock(mktime(&tm));
+    *errmsg_out = "";
+    return clk + nano_t{n};
 }
 
 bool parse_time(const std::string &str, local_or_utc_time_t zone,

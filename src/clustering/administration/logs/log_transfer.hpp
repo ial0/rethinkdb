@@ -10,7 +10,7 @@
 class log_server_business_card_t {
 public:
     typedef mailbox_t<boost::variant<std::vector<log_message_t>, std::string>> result_mailbox_t;
-    typedef mailbox_t<int, struct timespec, struct timespec, result_mailbox_t::address_t> request_mailbox_t;
+    typedef mailbox_t<int, timespec_t,  timespec_t, result_mailbox_t::address_t> request_mailbox_t;
 
     log_server_business_card_t() { }
     explicit log_server_business_card_t(const request_mailbox_t::address_t &a) : address(a) { }
@@ -29,7 +29,7 @@ public:
 private:
     void handle_request(
         signal_t *interruptor,
-        int max_lines, struct timespec min_timestamp, struct timespec max_timestamp,
+        int max_lines, timespec_t min_timestamp,  timespec_t max_timestamp,
         log_server_business_card_t::result_mailbox_t::address_t cont);
     mailbox_manager_t *mailbox_manager;
     thread_pool_log_writer_t *writer;
@@ -53,8 +53,8 @@ std::vector<log_message_t> fetch_log_file(
     mailbox_manager_t *mailbox_manager,
     const log_server_business_card_t &server_bcard,
     int max_entries,
-    struct timespec min_timestamp,
-    struct timespec max_timestamp,
+    timespec_t min_timestamp,
+    timespec_t max_timestamp,
     signal_t *interruptor)
     THROWS_ONLY(log_transfer_exc_t, log_read_exc_t, interrupted_exc_t);
 

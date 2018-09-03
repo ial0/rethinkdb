@@ -31,6 +31,7 @@
 #include "logger.hpp"
 #include "perfmon/perfmon.hpp"
 #include "errors.hpp"
+#include "time.hpp"
 
 #ifdef _WIN32
 #include "concurrency/pmap.hpp"
@@ -1601,7 +1602,7 @@ fd_t linux_nonthrowing_tcp_listener_t::wait_for_any_socket(const auto_drainer_t:
 #endif
 
 void linux_nonthrowing_tcp_listener_t::accept_loop(auto_drainer_t::lock_t lock) {
-    exponential_backoff_t backoff(10, 160, 2.0, 0.5);
+    exponential_backoff_t backoff(milli_t{10}, milli_t{160}, 2.0, 0.5);
 
 #ifdef _WIN32
 
@@ -1721,13 +1722,13 @@ void linux_repeated_nonthrowing_tcp_listener_t::retry_loop(auto_drainer_t::lock_
     try {
         bool bound = listener.begin_listening();
 
-        for (int retry_interval = 1;
+        for (auto retry_interval = seconds_t{1};
              !bound;
-             retry_interval = std::min(10, retry_interval + 2)) {
-            logNTC("Will retry binding to port %d in %d seconds.\n",
+             retry_interval = std::min(seconds_t{10}, retry_interval + seconds_t{2})) {
+            logNTC("Will retry binding to port %d in %ld seconds.\n",
                    listener.get_port(),
-                   retry_interval);
-            nap(retry_interval * 1000, lock.get_drain_signal());
+                   retry_interval.count());
+            nap(retry_interval, lock.get_drain_signal());
             bound = listener.begin_listening();
         }
 

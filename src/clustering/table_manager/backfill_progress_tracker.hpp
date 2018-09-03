@@ -15,7 +15,7 @@ public:
     class progress_tracker_t {
     public:
         bool is_ready;
-        microtime_t start_time;
+        realtime_t start_time;
         server_id_t source_server_id;
         double progress;
     };

@@ -23,6 +23,8 @@
 #include "rpc/semilattice/joins/versioned.hpp"
 #include "rpc/serialize_macros.hpp"
 
+#include "time.hpp"
+
 class cluster_semilattice_metadata_t {
 public:
     cluster_semilattice_metadata_t() { }
@@ -47,11 +49,11 @@ public:
         // Generate a timestamp that's minus our current time, so that the oldest
         // initial password wins. Unless the initial password is empty, which
         // should always lose.
-        time_t version_ts = std::numeric_limits<time_t>::min();
+        realtime_t version_ts = realtime_t::min();
         if (!initial_password.empty()) {
-            time_t current_time = time(nullptr);
-            if (current_time > 0) {
-                version_ts = -current_time;
+            realtime_t current_time = clock_realtime();
+            if (current_time > realtime_t{}) {
+                version_ts = realtime_t{realtime_t{} - current_time};
             } else {
                 logWRN("The system time seems to be incorrectly set. Metadata "
                        "versioning will behave unexpectedly.");
@@ -80,9 +82,9 @@ RDB_DECLARE_EQUALITY_COMPARABLE(auth_semilattice_metadata_t);
 class heartbeat_semilattice_metadata_t {
 public:
     heartbeat_semilattice_metadata_t()
-        : heartbeat_timeout(10000) { }
+        : heartbeat_timeout(seconds_t{10}) { }
 
-    versioned_t<uint64_t> heartbeat_timeout;
+    versioned_t<milli_t> heartbeat_timeout;
 };
 
 RDB_DECLARE_SERIALIZABLE(heartbeat_semilattice_metadata_t);
@@ -103,7 +105,7 @@ too complicated. */
 class proc_directory_metadata_t {
 public:
     std::string version;   /* server version string, e.g. "rethinkdb 1.X.Y ..." */
-    microtime_t time_started;
+    realtime_t time_started;
     int64_t pid;   /* really a `pid_t`, but we need a platform-independent type */
     std::string hostname;
     uint16_t cluster_port, reql_port;

@@ -347,7 +347,7 @@ std::map<std::string, std::pair<sindex_config_t, sindex_status_t> > store_t::sin
             res->second.ready = true;
             res->second.progress_numerator = 0.0;
             res->second.progress_denominator = 0.0;
-            res->second.start_time = -1;
+            res->second.start_time = realtime_t::min();
         } else {
             res->second.ready = false;
             res->second.progress_numerator = get_sindex_progress(pair.second.id);
@@ -618,10 +618,10 @@ double store_t::get_sindex_progress(uuid_u const &id) {
     }
 }
 
-microtime_t store_t::get_sindex_start_time(uuid_u const &id) {
+realtime_t store_t::get_sindex_start_time(uuid_u const &id) {
     auto iterator = sindex_context.find(id);
     if (iterator == sindex_context.end()) {
-        return -1;
+        return realtime_t::min();
     } else {
         return iterator->second.first;
     }

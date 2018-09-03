@@ -8,7 +8,7 @@ template <typename T>
 job_report_base_t<T>::job_report_base_t(
         std::string const &_type,
         uuid_u const &_id,
-        double _duration,
+        datum_micro_t _duration,
         server_id_t const &_server_id)
     : type(_type),
       id(_id),
@@ -57,7 +57,7 @@ bool job_report_base_t<T>::to_datum(
     builder.overwrite("type", convert_string_to_datum(type));
     builder.overwrite("id", convert_job_type_and_id_to_datum(type, id));
     builder.overwrite("duration_sec",
-        duration >= 0 ? ql::datum_t(duration / 1e6) : ql::datum_t::null());
+        duration >= datum_micro_t::zero() ? ql::datum_t(time_cast<datum_seconds_t>(duration).count()) : ql::datum_t::null());
     builder.overwrite("servers", std::move(servers_builder).to_datum());
     builder.overwrite("info", std::move(info_builder).to_datum());
     *row_out = std::move(builder).to_datum();

@@ -109,7 +109,7 @@ ql::datum_t convert_port_to_datum(
         uint16_t value);
 
 ql::datum_t convert_microtime_to_datum(
-        microtime_t value);
+        realtime_t value);
 
 template<class T>
 ql::datum_t convert_vector_to_datum(

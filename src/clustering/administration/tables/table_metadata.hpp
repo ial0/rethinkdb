@@ -59,7 +59,7 @@ public:
     // Use the default value, or never flush, or specify a non-negative double.
     boost::variant<flush_interval_default_t,
                    flush_interval_never_t,
-                   double> variant;
+                   datum_seconds_t> variant;
 };
 
 flush_interval_config_t default_flush_interval_config();

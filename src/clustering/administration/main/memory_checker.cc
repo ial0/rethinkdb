@@ -12,7 +12,7 @@
 #include "rdb_protocol/env.hpp"
 #include "rdb_protocol/pseudo_time.hpp"
 
-static const int64_t delay_time = 60*1000;
+static const milli_t delay_time = seconds_t{60};
 static const int64_t reset_checks = 10;
 
 static const int64_t practice_runs = 2;

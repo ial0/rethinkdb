@@ -443,7 +443,7 @@ bool do_serve(io_backender_t *io_backender,
 
             proc_directory_metadata_t initial_proc_directory {
                 RETHINKDB_VERSION_STR,
-                current_microtime(),
+                clock_realtime(),
                 getpid(),
                 str_gethostname(),
                 /* Note we'll update `reql_port` and `http_port` later, once final values

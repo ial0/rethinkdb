@@ -8,14 +8,14 @@ namespace unittest {
 
 TEST(LogMessageTest, ParseFormat) {
 
-    struct timespec timestamp = clock_realtime();
-    struct timespec uptime = clock_monotonic();
+    auto timestamp = clock_realtime();
+    auto uptime = clock_monotonic();
 
-    log_message_t message(timestamp, uptime, log_level_info, "test message *(&Q(!#@LJVO");
+    log_message_t message(timestamp, time_cast<micro_t>(uptime.time_since_epoch()), log_level_info, "test message *(&Q(!#@LJVO");
     std::string formatted = format_log_message(message);
     log_message_t parsed = parse_log_message(formatted);
-    EXPECT_EQ(message.timestamp.tv_sec, parsed.timestamp.tv_sec);
-    EXPECT_EQ(message.uptime.tv_sec, parsed.uptime.tv_sec);
+    EXPECT_EQ(message.timestamp, parsed.timestamp);
+    EXPECT_EQ(message.uptime.count(), parsed.uptime.count());
     EXPECT_EQ(message.level, parsed.level);
     EXPECT_EQ(message.message, parsed.message);
 }

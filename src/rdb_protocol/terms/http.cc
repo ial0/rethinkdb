@@ -75,7 +75,7 @@ private:
 
     static void get_timeout_ms(scope_env_t *env,
                                args_t *args,
-                               uint64_t *timeout_ms_out);
+                               milli_t *timeout_ms_out);
 
     static void get_header(scope_env_t *env,
                            args_t *args,
@@ -108,7 +108,7 @@ private:
                                      const bt_rcheckable_t *auth);
 
     // Have a maximum timeout of 30 days
-    static const uint64_t MAX_TIMEOUT_MS = 2592000000ull;
+    static constexpr milli_t MAX_TIMEOUT_MS{2592000};
 };
 
 void check_url_params(const datum_t &params,
@@ -455,17 +455,17 @@ void http_term_t::get_optargs(scope_env_t *env,
 // out of the HTTP request.  This must be a NUMBER, but may be fractional.
 void http_term_t::get_timeout_ms(scope_env_t *env,
                                  args_t *args,
-                                 uint64_t *timeout_ms_out) {
+                                 milli_t *timeout_ms_out) {
     scoped_ptr_t<val_t> timeout = args->optarg(env, "timeout");
     if (timeout.has()) {
-        double tmp = timeout->as_num();
-        tmp *= 1000;
+        datum_seconds_t tmp{timeout->as_num()};
+        //tmp *= 1000;
 
-        if (tmp < 0) {
+        if (tmp < datum_seconds_t::zero()) {
             rfail_target(timeout.get(), base_exc_t::LOGIC,
                          "`timeout` may not be negative.");
         } else {
-            *timeout_ms_out = clamp<double>(tmp, 0, MAX_TIMEOUT_MS);
+            *timeout_ms_out = std::clamp<milli_t>(time_cast<milli_t>(tmp), milli_t::zero(), MAX_TIMEOUT_MS);
         }
     }
 }

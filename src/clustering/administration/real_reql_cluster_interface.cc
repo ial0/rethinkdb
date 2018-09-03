@@ -355,7 +355,7 @@ bool real_reql_cluster_interface_t::table_create(
     process, causing it to wait indefinitely; for example, the table might be deleted, or
     a server might go down. So we set a 10-second timeout. */
     signal_timer_t timer;
-    timer.start(10000);
+    timer.start(seconds_t{10});
     wait_any_t combined_interruptor(&timer, interruptor_on_caller);
     try {
         wait_for_table_readiness(

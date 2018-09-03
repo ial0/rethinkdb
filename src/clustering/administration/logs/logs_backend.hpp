@@ -97,7 +97,7 @@ private:
 
         logs_artificial_table_backend_t *parent;
         std::set<peer_id_t> peers_handled;
-        std::map<peer_id_t, timespec> last_timestamps;
+        std::map<peer_id_t, timespec_t> last_timestamps;
 
         /* `all_starters_done` is pulsed when we've fetched logs from every peer that was
         connected to the `cfeed_machinery_t` when it was first created. When the

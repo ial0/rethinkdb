@@ -30,7 +30,7 @@ public:
     job_report_base_t(
             std::string const &type,
             uuid_u const &id,
-            double duration,
+            datum_micro_t duration,
             server_id_t const &server_id);
 
     void merge(T const & job_report);
@@ -45,7 +45,7 @@ public:
     // `type` can be derived from the derived type, but having it as a string is easier.
     std::string type;
     uuid_u id;
-    double duration;
+    datum_micro_t duration;
     std::set<server_id_t> servers;
 };
 
@@ -54,7 +54,7 @@ public:
     backfill_job_report_t();
     backfill_job_report_t(
             uuid_u const &id,
-            double duration,
+            datum_milli_t duration,
             server_id_t const &server_id,
             namespace_id_t const &table,
             bool is_ready,
@@ -86,7 +86,7 @@ public:
     disk_compaction_job_report_t();
     disk_compaction_job_report_t(
             uuid_u const &id,
-            double duration,
+            datum_milli_t duration,
             server_id_t const &server_id);
 
     void merge_derived(disk_compaction_job_report_t const &job_report);
@@ -106,7 +106,7 @@ public:
     index_construction_job_report_t();
     index_construction_job_report_t(
             uuid_u const &id,
-            double duration,
+            datum_micro_t duration,
             server_id_t const &server_id,
             namespace_id_t const &table,
             std::string const &index,
@@ -136,7 +136,7 @@ public:
     query_job_report_t();
     query_job_report_t(
             uuid_u const &id,
-            double duration,
+            datum_micro_t duration,
             server_id_t const &server_id,
             ip_and_port_t const &client_addr_port,
             std::string const &query,

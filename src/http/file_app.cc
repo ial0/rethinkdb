@@ -51,16 +51,16 @@ void file_http_app_t::handle(const http_req_t &req, http_res_t *result, signal_t
 
     const std::string &resource_data = it->second;
 
-    time_t expires;
+    realtime_t expires;
 #ifndef NDEBUG
     // In debug mode, do not cache static web assets
-    expires = get_realtime_secs() - 31536000; // Some time in the past (one year ago)
+    expires = clock_realtime() - std::chrono::hours{365 * 24}; // Some time in the past (one year ago)
 #else
     // In release mode, cache static web assets except index.html
     if (filename == "/index.html") {
-        expires = get_realtime_secs() - 31536000; // Some time in the past (one year ago)
+        expires = clock_realtime() - std::chrono::hours{365 * 24}; // Some time in the past (one year ago)
     } else {
-        expires = get_realtime_secs() + 31536000; // One year from now
+        expires = clock_realtime() + std::chrono::hours{365 * 24}; // One year from now
     }
 #endif
     result->add_header_line("Expires", http_format_date(expires));

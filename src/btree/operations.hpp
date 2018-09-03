@@ -17,6 +17,7 @@
 #include "perfmon/perfmon.hpp"
 #include "repli_timestamp.hpp"
 #include "utils.hpp"
+#include "time.hpp"
 
 /* This is the main entry point for performing B-tree operations. */
 

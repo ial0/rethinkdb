@@ -141,7 +141,7 @@ void run_backfill_test(
         primary_dispatcher_t *dispatcher;
     } inserter(dispatcher, &inserter_state, order_source);
 
-    nap(100);
+    nap(milli_t{100});
 
     remote_replicator_server_t remote_replicator_server(
         cluster->get_mailbox_manager(),
@@ -170,7 +170,7 @@ void run_backfill_test(
         &bhm2,
         &interruptor);
 
-    nap(100);
+    nap(milli_t{100});
 
     /* Stop the inserter, then let any lingering writes finish */
     inserter.stop();

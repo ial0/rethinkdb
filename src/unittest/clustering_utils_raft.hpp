@@ -65,7 +65,7 @@ public:
     void set_live(const raft_member_id_t &member_id, live_t live);
 
     raft_member_id_t find_leader(signal_t *interruptor);
-    raft_member_id_t find_leader(int timeout);
+    raft_member_id_t find_leader(milli_t timeout);
 
     /* Tries to perform the given change on the member with the given ID. */
     bool try_change(
@@ -167,7 +167,7 @@ private:
     auto_drainer_t drainer;
 };
 
-void do_writes_raft(dummy_raft_cluster_t *cluster, int expect, int ms);
+void do_writes_raft(dummy_raft_cluster_t *cluster, int expect, milli_t ms);
 
 }   /* namespace unittest */
 

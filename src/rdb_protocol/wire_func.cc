@@ -76,7 +76,7 @@ public:
         serialize<W>(wm, wire_func_type_t::JS);
         const std::string &js_source = js_func->js_source;
         serialize<W>(wm, js_source);
-        const uint64_t &js_timeout_ms = js_func->js_timeout_ms;
+        const auto &js_timeout_ms = js_func->js_timeout_ms;
         serialize<W>(wm, js_timeout_ms);
         backtrace_id_t backtrace = js_func->backtrace();
         serialize<W>(wm, backtrace);
@@ -137,7 +137,7 @@ archive_result_t deserialize(read_stream_t *s, wire_func_t *wf) {
         res = deserialize<W>(s, &js_source);
         if (bad(res)) { return res; }
 
-        uint64_t js_timeout_ms;
+        milli_t js_timeout_ms;
         res = deserialize<W>(s, &js_timeout_ms);
         if (bad(res)) { return res; }
 
@@ -202,7 +202,7 @@ archive_result_t deserialize_wire_func(
         res = deserialize<W>(s, &js_source);
         if (bad(res)) { return res; }
 
-        uint64_t js_timeout_ms;
+        milli_t js_timeout_ms;
         res = deserialize<W>(s, &js_timeout_ms);
         if (bad(res)) { return res; }
 

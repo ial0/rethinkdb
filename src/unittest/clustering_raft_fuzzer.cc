@@ -43,7 +43,7 @@ public:
         active_config.config = config;
     }
 
-    void run(uint64_t timeout_ms) {
+    void run(milli_t timeout_ms) {
         signal_timer_t interruptor;
         interruptor.start(timeout_ms);
 
@@ -95,14 +95,14 @@ public:
 
         /* Give the cluster some time to stabilize */
         RAFT_DEBUG("waiting for cluster to stabilize\n");
-        nap(5000);
+        nap(seconds_t{5});
 
         RAFT_DEBUG("running final test writes\n");
-        do_writes_raft(&cluster, 100, 60000);
+        do_writes_raft(&cluster, 100, seconds_t{60});
 
         RAFT_DEBUG("running final test config change\n");
         signal_timer_t final_interruptor;
-        final_interruptor.start(30000); // Allow up to 30 seconds to finish the final verification
+        final_interruptor.start(seconds_t{30}); // Allow up to 30 seconds to finish the final verification
         raft_member_id_t leader = cluster.find_leader(&final_interruptor);
         raft_config_t final_config;
         final_config.voting_members.insert(leader);
@@ -122,7 +122,7 @@ private:
         try {
             while (true) {
                 signal_timer_t timeout;
-                timeout.start(rng.randint(800));
+                timeout.start(milli_t{rng.randint(800)});
                 wait_interruptible(&timeout, interruptor);
 
                 if (rng.randint(4) == 0) {
@@ -149,7 +149,7 @@ private:
         try {
             while (true) {
                 signal_timer_t timeout;
-                timeout.start(rng.randint(100));
+                timeout.start(milli_t{rng.randint(100)});
                 wait_interruptible(&timeout, interruptor);
 
                 raft_config_t config;
@@ -227,7 +227,7 @@ private:
         try {
             while (true) {
                 signal_timer_t timeout;
-                timeout.start(rng.randint(100));
+                timeout.start(milli_t{rng.randint(100)});
                 wait_interruptible(&timeout, interruptor);
 
                 raft_member_id_t leader = cluster.find_leader(interruptor);
@@ -253,7 +253,7 @@ TPTEST(ClusteringRaft, Fuzzer) {
 #endif
     pmap(num_concurrent, [](int) {
         raft_fuzzer_t fuzzer(randint(7) + 1);
-        fuzzer.run(20000);
+        fuzzer.run(seconds_t{20});
     });
 }
 

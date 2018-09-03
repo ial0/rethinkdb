@@ -124,7 +124,7 @@ private:
     void random_delay(signal_t *interruptor) {
         if (randint(2) == 0) {
             signal_timer_t timer;
-            timer.start(randint(100));
+            timer.start(milli_t{randint(100)});
             wait_interruptible(&timer, interruptor);
         }
     }

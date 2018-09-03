@@ -43,7 +43,7 @@ private:
             ql::datum_t *row_out,
             admin_err_t *error_out);
 
-    std::map<peer_id_t, microtime_t> connect_times;
+    std::map<peer_id_t, realtime_t> connect_times;
 
     server_config_client_t *server_config_client;
     admin_identifier_format_t admin_format;

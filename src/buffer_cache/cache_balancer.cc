@@ -7,9 +7,9 @@
 #include "arch/runtime/runtime.hpp"
 #include "concurrency/pmap.hpp"
 
-const uint64_t alt_cache_balancer_t::rebalance_check_interval_ms = 20;
+const milli_t alt_cache_balancer_t::rebalance_check_interval_ms = milli_t {20};
 const uint64_t alt_cache_balancer_t::rebalance_access_count_threshold = 100;
-const int64_t alt_cache_balancer_t::rebalance_timeout_ms = 500;
+const milli_t alt_cache_balancer_t::rebalance_timeout_ms = milli_t {500};
 
 const double alt_cache_balancer_t::read_ahead_proportion = 0.9;
 
@@ -28,14 +28,14 @@ alt_cache_balancer_t::alt_cache_balancer_t(
     total_cache_size_watchable(_total_cache_size_watchable),
     rebalance_timer(make_scoped<repeating_timer_t>(rebalance_check_interval_ms, this)),
     rebalance_timer_state(rebalance_timer_state_t::normal),
-    last_rebalance_time{0},
+    last_rebalance_time{kiloticks_t::zero()},
     read_ahead_ok(true),
     bytes_toward_read_ahead_limit(0),
     per_thread_data(get_num_threads()),
     rebalance_pumper([this](signal_t *interruptor) { rebalance_blocking(interruptor); }),
     cache_size_change_subscription(
         [this]() {
-            last_rebalance_time = kiloticks_t{0};
+            last_rebalance_time = kiloticks_t::zero();
             wake_up_activity_happened();
             rebalance_pumper.notify();
         })
@@ -142,7 +142,7 @@ void alt_cache_balancer_t::rebalance_blocking(UNUSED signal_t *interruptor) {
     // since the last rebalance.
     kiloticks_t now = get_kiloticks();
 
-    if (now.micros < last_rebalance_time.micros + (rebalance_timeout_ms * 1000) &&
+    if ((now < last_rebalance_time + rebalance_timeout_ms) &&
         total_access_count < rebalance_access_count_threshold) {
         rebalance_timer_state = rebalance_timer_state_t::normal;
         return;

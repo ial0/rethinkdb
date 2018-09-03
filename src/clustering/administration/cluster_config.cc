@@ -109,8 +109,8 @@ bool cluster_config_artificial_table_backend_t::heartbeat_doc_t::read(
     on_thread_t thread_switcher(sl_view->home_thread());
     ql::datum_object_builder_t obj_builder;
     obj_builder.overwrite("id", ql::datum_t("heartbeat"));
-    obj_builder.overwrite("heartbeat_timeout_secs", ql::datum_t(static_cast<double>(
-        sl_view->get().heartbeat_timeout.get_ref()) / 1000));
+    obj_builder.overwrite("heartbeat_timeout_secs", ql::datum_t(to_datum_time<datum_seconds_t>(
+        sl_view->get().heartbeat_timeout.get_ref()).count()));
     *row_out = std::move(obj_builder).to_datum();
     return true;
 }
@@ -133,10 +133,10 @@ bool cluster_config_artificial_table_backend_t::heartbeat_doc_t::write(
     if (!converter.get("heartbeat_timeout_secs", &heartbeat_timeout_datum, error_out)) {
         return false;
     }
-    double heartbeat_timeout;
+    datum_seconds_t heartbeat_timeout;
     if (heartbeat_timeout_datum.get_type() == ql::datum_t::R_NUM) {
-        heartbeat_timeout = heartbeat_timeout_datum.as_num();
-        if (heartbeat_timeout < 2) {
+        heartbeat_timeout = datum_seconds_t{heartbeat_timeout_datum.as_num()};
+        if (heartbeat_timeout < datum_seconds_t{2}) {
             *error_out = admin_err_t{
                 "The heartbeat timeout must be at least two seconds",
                 query_state_t::FAILED};
@@ -156,7 +156,7 @@ bool cluster_config_artificial_table_backend_t::heartbeat_doc_t::write(
     {
         on_thread_t thread_switcher(sl_view->home_thread());
         heartbeat_semilattice_metadata_t metadata = sl_view->get();
-        metadata.heartbeat_timeout.set(heartbeat_timeout * 1000);
+        metadata.heartbeat_timeout.set(from_datum_time<milli_t>(heartbeat_timeout));
         sl_view->join(metadata);
     }
 

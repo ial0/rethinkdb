@@ -10,12 +10,12 @@
 
 /* Coroutine function that delays for some number of milliseconds. */
 
-void nap(int64_t ms) THROWS_NOTHING;
+void nap(milli_t ms) THROWS_NOTHING;
 
 /* This variant takes an interruptor, and throws `interrupted_exc_t` if the
 interruptor is pulsed before the timeout is up */
 
-void nap(int64_t ms, const signal_t *interruptor) THROWS_ONLY(interrupted_exc_t);
+void nap(milli_t ms, const signal_t *interruptor) THROWS_ONLY(interrupted_exc_t);
 
 class timer_token_t;
 
@@ -26,11 +26,11 @@ timer "rings". */
 class signal_timer_t : public signal_t, private timer_callback_t {
 public:
     signal_timer_t();
-    explicit signal_timer_t(int64_t ms); // Calls `start` for you.
+    explicit signal_timer_t(milli_t ms); // Calls `start` for you.
     ~signal_timer_t();
 
     // Starts the timer, cannot be called if the timer is already running
-    void start(int64_t ms);
+    void start(milli_t ms);
 
     // Stops the timer from running
     // Returns true if the timer was canceled, false if there was no timer to cancel
@@ -40,7 +40,7 @@ public:
     bool is_running() const;
 
 private:
-    void on_timer(ticks_t ticks);
+    void on_timer(monotonic_t time) override;
     timer_token_t *timer;
 };
 
@@ -58,25 +58,26 @@ protected:
 
 class repeating_timer_t : private timer_callback_t {
 public:
-    repeating_timer_t(int64_t interval_ms, const std::function<void()> &ringee);
-    repeating_timer_t(int64_t interval_ms, repeating_timer_callback_t *ringee);
+    repeating_timer_t(milli_t interval, const std::function<void()> &ringee);
+    repeating_timer_t(milli_t interval, repeating_timer_callback_t *ringee);
     ~repeating_timer_t();
+
 
     // Increases or decreases the interval.  The next ring of the timer will always be
     // based on the minimum value of the timing interval held before that ring.
-    void change_interval(int64_t interval_ms);
+    void change_interval(milli_t interval_ms);
 
     // Makes next ring happen no later than delay_ms milliseconds from now (or slightly
     // later).
-    void clamp_next_ring(int64_t delay_ms);
+    void clamp_next_ring(milli_t delay_ms);
 
-    int64_t interval_ms() const { return interval; }
+    milli_t interval_ms() const { return interval; }
 
 private:
-    void on_timer(ticks_t ticks);
-    int64_t interval;  // milliseconds
-    ticks_t last_ticks;
-    ticks_t expected_next_ticks;
+    void on_timer(monotonic_t ticks) override;
+    milli_t interval;  // (milliseconds)
+    monotonic_t last_time;
+    monotonic_t expected_next;
     timer_token_t *timer;
     std::function<void()> ringee;
 

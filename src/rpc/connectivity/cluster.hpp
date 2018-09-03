@@ -196,7 +196,7 @@ public:
               const server_id_t &server_id,
               const std::set<ip_address_t> &local_addresses,
               const peer_address_t &canonical_addresses,
-              const int join_delay_secs,
+              const seconds_t join_delay_secs,
               int port,
               int client_port,
               std::shared_ptr<semilattice_read_view_t<
@@ -211,7 +211,7 @@ public:
         /* Attaches the cluster this node is part of to another existing
         cluster. May only be called on home thread. Returns immediately (it does
         its work in the background). */
-        void join(const peer_address_t &address, const int join_delay_secs) THROWS_NOTHING;
+        void join(const peer_address_t &address, const seconds_t join_delay_secs) THROWS_NOTHING;
 
         std::set<host_and_port_t> get_canonical_addresses();
         int get_port();
@@ -242,7 +242,7 @@ public:
         };
 
         void on_new_connection(const scoped_ptr_t<tcp_conn_descriptor_t> &nconn,
-                const int join_delay_secs,
+                const seconds_t join_delay_secs,
                 auto_drainer_t::lock_t lock) THROWS_NOTHING;
 
         /* `connect_to_peer` is spawned for each known ip address of a peer which we want
@@ -254,7 +254,7 @@ public:
                              optional<server_id_t> expected_server_id,
                              auto_drainer_t::lock_t drainer_lock,
                              bool *successful_join_inout,
-                             const int join_delay_secs,
+                             const seconds_t join_delay_secs,
                              co_semaphore_t *rate_control) THROWS_NOTHING;
 
         /* `join_blocking()` is spawned in a new coroutine by `join()`. It's also run by
@@ -264,7 +264,7 @@ public:
         join_results_t join_blocking(const peer_address_t &peer,
                            optional<peer_id_t> expected_id,
                            optional<server_id_t> expected_server_id,
-                           const int join_delay_secs,
+                           const seconds_t join_delay_secs,
                            auto_drainer_t::lock_t) THROWS_NOTHING;
 
         // Normal routing table isn't serializable, so we send just the hosts/ports
@@ -287,7 +287,7 @@ public:
             optional<server_id_t> expected_server_id,
             auto_drainer_t::lock_t,
             bool *successful_join_inout,
-            const int join_delay_secs) THROWS_NOTHING;
+            const seconds_t join_delay_secs) THROWS_NOTHING;
 
         connectivity_cluster_t *parent;
 

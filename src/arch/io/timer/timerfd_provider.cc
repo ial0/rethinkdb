@@ -34,19 +34,20 @@ timerfd_provider_t::~timerfd_provider_t() {
     guarantee_err(res == 0 || get_errno() == EINTR, "Could not close the timer.");
 }
 
-void timerfd_provider_t::schedule_oneshot(const int64_t next_time_in_nanos, timer_provider_callback_t *const cb) {
+void timerfd_provider_t::schedule_oneshot(const monotonic_t next_time, timer_provider_callback_t *const cb) {
     // We could pass TFD_TIMER_ABSTIME to timerfd_settime (thus avoiding the std::max logic below),
     // but that would mean this code depends on the fact that get_ticks() is implemented in terms of
     // CLOCK_MONOTONIC.
 
-    const int64_t time_difference = next_time_in_nanos - get_ticks().nanos;
-    const int64_t wait_nanos = std::max<int64_t>(1, time_difference);
+
+    const auto time_difference = next_time - clock_monotonic();
+    const auto wait_nanos = std::max(ticks_t{1}, time_difference);
 
     struct itimerspec spec;
     spec.it_interval.tv_sec = 0;
     spec.it_interval.tv_nsec = 0;
-    spec.it_value.tv_sec = wait_nanos / BILLION;
-    spec.it_value.tv_nsec = wait_nanos % BILLION;
+    spec.it_value.tv_sec = time_cast<seconds_t>(wait_nanos).count();
+    spec.it_value.tv_nsec = (wait_nanos % seconds_t{1}).count();
 
     const int res = timerfd_settime(timer_fd, 0, &spec, nullptr);
     guarantee_err(res == 0, "Could not arm the timer.");

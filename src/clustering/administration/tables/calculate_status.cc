@@ -14,7 +14,7 @@ bool wait_for_table_readiness(
         THROWS_ONLY(interrupted_exc_t, no_such_table_exc_t) {
     namespace_interface_access_t ns_if =
         namespace_repo->get_namespace_interface(table_id, interruptor);
-    exponential_backoff_t backoff(100, 5000);
+    exponential_backoff_t backoff(milli_t{100}, seconds_t{5});
     bool immediate = true;
     while (true) {
         if (!table_meta_client->exists(table_id)) {

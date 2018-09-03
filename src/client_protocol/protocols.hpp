@@ -9,12 +9,14 @@
 // Include all available wire protocols
 #include "client_protocol/json.hpp"
 
+#include "time.hpp"
+
 // Contains common declarations used by all wire protocols, this is a class rather than
 // a namespace so we don't have to extern stuff.
 class wire_protocol_t {
 public:
     static const uint32_t HARD_LIMIT_TOO_LARGE_QUERY_SIZE;
-    static const uint32_t TOO_LONG_QUERY_TIME;
+    static const milli_t TOO_LONG_QUERY_TIME;
     static const uint32_t TOO_LARGE_QUERY_SIZE;
     static const uint32_t TOO_LARGE_RESPONSE_SIZE;
 

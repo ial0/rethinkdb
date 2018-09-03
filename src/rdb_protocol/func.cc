@@ -100,7 +100,7 @@ bool reql_func_t::is_simple_selector() const {
 }
 
 js_func_t::js_func_t(const std::string &_js_source,
-                     uint64_t timeout_ms,
+                     milli_t timeout_ms,
                      backtrace_id_t _backtrace)
     : func_t(_backtrace),
       js_source(_js_source),
@@ -303,7 +303,7 @@ std::string reql_func_t::print_js_function() const {
 }
 
 std::string js_func_t::print_source() const {
-    std::string ret = strprintf("javascript timeout=%" PRIu64 "ms, source=", js_timeout_ms);
+    std::string ret = strprintf("javascript timeout=%" PRIu64 "ms, source=", js_timeout_ms.count());
     ret += js_source;
     return ret;
 }

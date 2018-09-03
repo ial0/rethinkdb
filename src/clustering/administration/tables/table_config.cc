@@ -236,8 +236,8 @@ struct convert_flush_interval_visitor_t : public boost::static_visitor<ql::datum
         return ql::datum_t("never");
     }
 
-    ql::datum_t operator()(double x) const {
-        return ql::datum_t(x);
+    ql::datum_t operator()(datum_seconds_t x) const {
+        return ql::datum_t(x.count());
     }
 };
 
@@ -264,7 +264,7 @@ bool convert_flush_interval_from_datum(
                 query_state_t::FAILED};
             return false;
         }
-        flush_interval_out->variant = val;
+        flush_interval_out->variant = datum_seconds_t{val};
     } else {
         *error_out = admin_err_t{
             "Expected \"default\", \"never\", or a non-negative number, got: "

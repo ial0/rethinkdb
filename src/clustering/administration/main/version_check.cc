@@ -13,6 +13,8 @@
 #include "rdb_protocol/env.hpp"
 #include "rdb_protocol/pseudo_time.hpp"
 
+#include "time.hpp"
+
 namespace ql {
 void dispatch_http(ql::env_t *env,
                    const http_opts_t &opts,
@@ -21,7 +23,7 @@ void dispatch_http(ql::env_t *env,
                    const ql::bt_rcheckable_t *parent);
 };
 
-static const int64_t day_in_ms = 24 * 60 * 60 * 1000;
+static const milli_t day_in_ms = std::chrono::hours{24};
 
 version_checker_t::version_checker_t(
         rdb_context_t *_rdb_ctx,

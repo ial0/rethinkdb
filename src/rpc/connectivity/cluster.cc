@@ -146,7 +146,7 @@ connectivity_cluster_t::connection_t::connection_t(
         this->conn->flush_buffer();
     }, 1),
     pm_collection(),
-    pm_bytes_sent(secs_to_ticks(1), true),
+    pm_bytes_sent(seconds_t{1}, true),
     pm_collection_membership(
         &_parent->parent->connectivity_collection,
         &pm_collection,
@@ -214,7 +214,7 @@ connectivity_cluster_t::run_t::run_t(
         const server_id_t &_server_id,
         const std::set<ip_address_t> &local_addresses,
         const peer_address_t &canonical_addresses,
-        const int join_delay_secs,
+        const seconds_t join_delay_secs,
         int port,
         int client_port,
         std::shared_ptr<semilattice_read_view_t<heartbeat_semilattice_metadata_t> >
@@ -286,7 +286,7 @@ int connectivity_cluster_t::run_t::get_port() {
 
 void connectivity_cluster_t::run_t::join(
         const peer_address_t &address,
-        const int join_delay_secs) THROWS_NOTHING {
+        const seconds_t join_delay_secs) THROWS_NOTHING {
     parent->assert_thread();
     coro_t::spawn_now_dangerously(std::bind(
         &connectivity_cluster_t::run_t::join_blocking,
@@ -301,7 +301,7 @@ void connectivity_cluster_t::run_t::join(
 
 void connectivity_cluster_t::run_t::on_new_connection(
         const scoped_ptr_t<tcp_conn_descriptor_t> &nconn,
-        const int join_delay_secs,
+        const seconds_t join_delay_secs,
         auto_drainer_t::lock_t lock) THROWS_NOTHING {
     parent->assert_thread();
 
@@ -332,11 +332,11 @@ join_result_t connectivity_cluster_t::run_t::connect_to_peer(
         optional<server_id_t> expected_server_id,
         auto_drainer_t::lock_t drainer_lock,
         bool *successful_join_inout,
-        const int join_delay_secs,
+        const seconds_t join_delay_secs,
         co_semaphore_t *rate_control) THROWS_NOTHING {
     // Wait to start the connection attempt, max time is one second per address
     signal_timer_t timeout;
-    timeout.start(index * 1000);
+    timeout.start(seconds_t{index});
 
     try {
         wait_any_t interrupt(&timeout, drainer_lock.get_drain_signal());
@@ -378,7 +378,7 @@ join_results_t connectivity_cluster_t::run_t::join_blocking(
         const peer_address_t &peer,
         optional<peer_id_t> expected_id,
         optional<server_id_t> expected_server_id,
-        const int join_delay_secs,
+        const seconds_t join_delay_secs,
         auto_drainer_t::lock_t drainer_lock) THROWS_NOTHING {
     drainer_lock.assert_is_holding(&parent->current_run->drainer);
     parent->assert_thread();
@@ -462,7 +462,7 @@ class connectivity_cluster_t::heartbeat_manager_t :
     private cluster_send_message_write_callback_t
 {
 public:
-    static const int HEARTBEAT_TIMEOUT_INTERVALS = 5;
+    static constexpr int HEARTBEAT_TIMEOUT_INTERVALS = 5;
 
     heartbeat_manager_t(
             connectivity_cluster_t::connection_t *connection_,
@@ -553,7 +553,7 @@ public:
 #endif
 
     void on_heartbeat_change() {
-        int64_t timeout_new = heartbeat_sl_view->get().heartbeat_timeout.get_ref();
+        auto timeout_new = heartbeat_sl_view->get().heartbeat_timeout.get_ref();
         if (timeout == timeout_new) {
             /* The timeout hasn't changed, this could be due to the semilattice
                `versioned` changing without the value changing. */
@@ -579,7 +579,7 @@ private:
     bool read_done, write_done;
     int64_t intervals_since_last_read_done;
     std::string peer_str;
-    int64_t timeout;
+    milli_t timeout;
 
     /* Order is important here. When destroying the `heartbeat_manager_t`, we must first
     destroy the timer so that new `on_ring()` calls don't get spawned; then destroy the
@@ -866,7 +866,7 @@ join_result_t connectivity_cluster_t::run_t::handle(
         optional<server_id_t> expected_server_id,
         auto_drainer_t::lock_t drainer_lock,
         bool *successful_join_inout,
-        const int join_delay_secs) THROWS_NOTHING
+        const seconds_t join_delay_secs) THROWS_NOTHING
 {
     parent->assert_thread();
 
@@ -1300,12 +1300,12 @@ join_result_t connectivity_cluster_t::run_t::handle(
 
     // Wait a certain amount to make sure that the connection is table. Only then
     // add it to the connectivity cluster and start processing messages.
-    if (join_delay_secs > 0) {
-        logINF("Delaying the join with server %s for %d seconds.",
+    if (join_delay_secs > milli_t::zero()) {
+        logINF("Delaying the join with server %s for %" PRIu64 " seconds.",
                remote_server_id.print().c_str(),
-               join_delay_secs);
+               join_delay_secs.count());
         try {
-            nap(static_cast<int64_t>(join_delay_secs) * 1000,
+            nap(join_delay_secs,
                 &connection_thread_drain_signal);
         } catch (const interrupted_exc_t &) {
             // Ignore this here. We will bail out below.
@@ -1505,7 +1505,7 @@ void connectivity_cluster_t::send_message(connection_t *connection,
     /* We're allowed to block indefinitely, but it's tempting to write code on
     the assumption that we won't. This might catch some programming errors. */
     if (randint(10) == 0) {
-        nap(10);
+        nap(milli_t{10});
     }
 #endif
 

@@ -110,8 +110,8 @@ private:
 
     // Constants to control how often we rebalance
     static const uint64_t rebalance_access_count_threshold;
-    static const int64_t rebalance_timeout_ms;
-    static const uint64_t rebalance_check_interval_ms;
+    static const milli_t rebalance_timeout_ms;
+    static const milli_t rebalance_check_interval_ms;
 
     // Controls how much read ahead is allowed out of total cache size
     static const double read_ahead_proportion;

@@ -55,7 +55,7 @@ bool fetch_stats_from_server(
     send(mailbox_manager, request_addr, return_mailbox.get_address(), filter);
 
     signal_timer_t timeout;
-    timeout.start(5000);
+    timeout.start(seconds_t{5});
 
     wait_any_t waiter(&done, &disconnect_watcher, &timeout);
     wait_interruptible(&waiter, interruptor);

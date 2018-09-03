@@ -38,7 +38,7 @@ void migrate_auth_metadata_v2_1_to_v2_3(metadata_file_t::write_txn_t *txn,
     // Read out the old auth metadata
     metadata_v1_16::auth_semilattice_metadata_t old_metadata;
     std::string old_auth_key;
-    time_t auth_key_ts = std::numeric_limits<time_t>::min();
+    auto auth_key_ts = realtime_t::min();
 
     // This can fail if we're migrating very old metadata, and it hasn't brought
     // in the auth_metadata file yet.  That will be done later and overwrite the

@@ -110,10 +110,10 @@ std::string format_log_message(const log_message_t &m, bool for_console) {
 
     std::string prepend;
     if (!for_console) {
-        prepend = strprintf("%s %ld.%06llds %s: ",
+        prepend = strprintf("%s %ld.%06lds %s: ",
                             format_time(m.timestamp, local_or_utc_time_t::local).c_str(),
-                            m.uptime.tv_sec,
-                            m.uptime.tv_nsec / THOUSAND,
+                            time_cast<seconds_t>(m.uptime).count(),
+                            time_cast<micro_t>(m.uptime % seconds_t{1}).count(),
                             format_log_level(m.level).c_str());
     } else {
         if (m.level != log_level_info && m.level != log_level_notice) {
@@ -197,15 +197,15 @@ log_message_t parse_log_message(const std::string &s) THROWS_ONLY(log_read_exc_t
     while (*p) p++;
     const char *end_message = p;
 
-    struct timespec timestamp;
+    timespec_t timestamp;
     {
         std::string errmsg;
-        if (!parse_time(std::string(start_timestamp, end_timestamp - start_timestamp),
-                        local_or_utc_time_t::local, &timestamp, &errmsg)) {
+        timestamp = parse_time(std::string(start_timestamp, end_timestamp - start_timestamp),
+                        local_or_utc_time_t::local, &errmsg);
+        if (!errmsg.empty())
             throw log_read_exc_t(errmsg);
-        }
     }
-    struct timespec uptime;
+    micro_t uptime{0};
 
     {
         std::string tv_sec_str(start_uptime_ipart, end_uptime_ipart - start_uptime_ipart);
@@ -214,7 +214,7 @@ log_message_t parse_log_message(const std::string &s) THROWS_ONLY(log_read_exc_t
             throw log_read_exc_t("cannot parse log message (9)");
         }
 
-        uptime.tv_sec = tv_sec;
+        uptime += seconds_t{tv_sec};
 
         std::string tv_nsec_str(start_uptime_fpart, end_uptime_fpart - start_uptime_fpart);
         uint64_t tv_nsec;
@@ -223,7 +223,7 @@ log_message_t parse_log_message(const std::string &s) THROWS_ONLY(log_read_exc_t
         }
 
         // TODO: Seriously?  We assume three decimal places?
-        uptime.tv_nsec = THOUSAND * tv_nsec;
+        uptime += micro_t{tv_nsec};
     }
 
     log_level_t level = parse_log_level(std::string(start_level, end_level - start_level));
@@ -330,8 +330,8 @@ private:
     bool write(const log_message_t &msg, std::string *error_out);
     void initiate_write(log_level_t level, const std::string &message);
     base_path_t filename;
-    struct timespec uptime_reference;
-    struct timespec last_msg_timestamp;
+    monotonic_t uptime_reference;
+    timespec_t last_msg_timestamp;
     spinlock_t last_msg_timestamp_lock;
 
 #ifdef _WIN32
@@ -411,7 +411,7 @@ void fallback_log_writer_t::install(const std::string &logfile_name) {
 
 log_message_t fallback_log_writer_t::assemble_log_message(
         log_level_t level, const std::string &m) {
-    struct timespec timestamp = clock_realtime();
+    timespec_t timestamp = clock_realtime();
 
     {
         /* Make sure timestamps on log messages are unique. */
@@ -422,17 +422,16 @@ log_message_t fallback_log_writer_t::assemble_log_message(
         being written; but the `log*()` functions are supposed to work even outside of
         the thread pool, including in the blocker pool. */
         spinlock_acq_t lock_acq(&last_msg_timestamp_lock);
-        struct timespec last_plus = last_msg_timestamp;
-        add_to_timespec(&last_plus, 1);
+        timespec_t last_plus = last_msg_timestamp + nano_t{1};
         if (last_plus > timestamp) {
             timestamp = last_plus;
         }
         last_msg_timestamp = timestamp;
     }
 
-    struct timespec uptime = subtract_timespecs(clock_monotonic(), uptime_reference);
+    auto uptime = clock_monotonic() -  uptime_reference;
 
-    return log_message_t(timestamp, uptime, level, m);
+    return log_message_t(timestamp, time_cast<milli_t>(uptime), level, m);
 }
 
 // WINDOWS TODO: this function could benefit from some refactoring
@@ -561,8 +560,8 @@ thread_pool_log_writer_t::~thread_pool_log_writer_t() {
 
 std::vector<log_message_t> thread_pool_log_writer_t::tail(
         int max_lines,
-        struct timespec min_timestamp,
-        struct timespec max_timestamp,
+        timespec_t min_timestamp,
+        timespec_t max_timestamp,
         signal_t *interruptor) THROWS_ONLY(log_read_exc_t, interrupted_exc_t) {
     assert_thread();
 
@@ -642,8 +641,8 @@ void thread_pool_log_writer_t::write_blocking(const log_message_t &msg, std::str
 
 void thread_pool_log_writer_t::tail_blocking(
         int max_lines,
-        timespec min_timestamp,
-        timespec max_timestamp,
+        timespec_t min_timestamp,
+        timespec_t max_timestamp,
         volatile bool *cancel,
         std::vector<log_message_t> *messages_out,
         std::string *error_out,
