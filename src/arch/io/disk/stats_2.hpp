@@ -6,8 +6,9 @@
 #include "arch/io/disk/pool.hpp"
 #include "perfmon/perfmon.hpp"
 
+
 struct stats_diskmgr_2_action_t : public pool_diskmgr_t::action_t {
-    ticks_t start_time;
+    monotonic_t start_time;
 };
 
 void debug_print(printf_buffer_t *buf,

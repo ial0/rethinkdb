@@ -47,8 +47,8 @@ void timer_handler_t::on_oneshot() {
     // If the timer_provider tends to return its callback a touch early, we don't want to make a
     // bunch of calls to it, returning a tad early over and over again, leading up to a ticks
     // threshold.  So we bump the real time up to the threshold when processing the priority queue.
-    auto realtime = clock_monotonic();
-    auto time = std::max(realtime, expected_oneshot_time);
+    auto monotime = clock_monotonic();
+    auto time = std::max(monotime, expected_oneshot_time);
 
     while (!token_queue.empty() && token_queue.peek()->next_time <= time) {
         std::unique_ptr<timer_token_t> token{token_queue.pop()};
@@ -56,11 +56,11 @@ void timer_handler_t::on_oneshot() {
         // Put the repeating timer back on the queue before the callback can be called (so that it
         // may be canceled).
         if (token->interval != chrono::nanoseconds::zero()) {
-            token->next_time = realtime + token->interval;
+            token->next_time = monotime + token->interval;
             token_queue.push(token.get());
         }
 
-        token->callback->on_timer(realtime);
+        token->callback->on_timer(monotime);
 
         // Delete nonrepeating timer tokens.
         if (token->interval != chrono::nanoseconds::zero()) {

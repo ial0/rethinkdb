@@ -10,9 +10,9 @@ stats_diskmgr_t::stats_diskmgr_t(perfmon_collection_t *stats, const std::string 
 
 void stats_diskmgr_t::submit(action_t *a) {
     if (a->get_is_read()) {
-        read_sampler.begin(&a->start_time);
+       a->start_time = read_sampler.begin();
     } else {
-        write_sampler.begin(&a->start_time);
+       a->start_time = write_sampler.begin();
     }
     submit_fun(a);
 }
@@ -20,9 +20,9 @@ void stats_diskmgr_t::submit(action_t *a) {
 void stats_diskmgr_t::done(conflict_resolving_diskmgr_action_t *p) {
     action_t *a = static_cast<action_t *>(p);
     if (a->get_is_read()) {
-        read_sampler.end(&a->start_time);
+        read_sampler.end(a->start_time);
     } else {
-        write_sampler.end(&a->start_time);
+        write_sampler.end(a->start_time);
     }
     done_fun(a);
 }

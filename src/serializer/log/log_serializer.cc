@@ -459,13 +459,12 @@ buf_ptr_t log_serializer_t::block_read(const counted_t<block_token_t> &token,
     guarantee(token.has());
     guarantee(state == state_ready);
 
-    ticks_t pm_time;
-    stats->pm_serializer_block_reads.begin(&pm_time);
+    const auto pm_time = stats->pm_serializer_block_reads.begin();
 
     buf_ptr_t ret = data_block_manager->read(token->offset_, token->block_size(),
                                              io_account);
 
-    stats->pm_serializer_block_reads.end(&pm_time);
+    stats->pm_serializer_block_reads.end(pm_time);
     return ret;
 }
 
@@ -473,8 +472,7 @@ void log_serializer_t::index_write(new_mutex_in_line_t *mutex_acq,
                                    const std::function<void()> &on_writes_reflected,
                                    const std::vector<index_write_op_t> &write_ops) {
     assert_thread();
-    ticks_t pm_time;
-    stats->pm_serializer_index_writes.begin(&pm_time);
+    const auto pm_time = stats->pm_serializer_index_writes.begin();
     stats->pm_serializer_index_writes_size.record(write_ops.size());
 
     extent_transaction_t txn;
@@ -566,7 +564,7 @@ void log_serializer_t::index_write(new_mutex_in_line_t *mutex_acq,
     index_write_finish(mutex_acq, &txn, index_writes_io_account.get(),
                        std::move(checksums));
 
-    stats->pm_serializer_index_writes.end(&pm_time);
+    stats->pm_serializer_index_writes.end(pm_time);
 }
 
 void log_serializer_t::index_write_prepare(extent_transaction_t *txn) {

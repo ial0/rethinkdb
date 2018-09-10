@@ -4,10 +4,12 @@
 
 #include "containers/printf_buffer.hpp"
 
+#include "utils.hpp"
+
 void debug_print(printf_buffer_t *buf,
                  const stats_diskmgr_2_action_t &action) {
     buf->appendf("stats_diskmgr_2_action{start_time=%" PRIi64 "}<",
-                 action.start_time.count());
+    		     action.start_time.time_since_epoch().count());
     const pool_diskmgr_t::action_t &parent_action = action;
     debug_print(buf, parent_action);
 }
@@ -31,9 +33,9 @@ stats_diskmgr_2_t::stats_diskmgr_2_t(
 void stats_diskmgr_2_t::done(pool_diskmgr_t::action_t *p) {
     action_t *a = static_cast<action_t *>(p);
     if (a->get_is_read()) {
-        read_sampler.end(&a->start_time);
+        read_sampler.end(a->start_time);
     } else {
-        write_sampler.end(&a->start_time);
+        write_sampler.end(a->start_time);
     }
     done_fun(a);
 }
@@ -41,9 +43,9 @@ void stats_diskmgr_2_t::done(pool_diskmgr_t::action_t *p) {
 pool_diskmgr_t::action_t *stats_diskmgr_2_t::produce_next_value() {
     action_t *a = source->pop();
     if (a->get_is_read()) {
-        read_sampler.begin(&a->start_time);
+        a->start_time = read_sampler.begin();
     } else {
-        write_sampler.begin(&a->start_time);
+        a->start_time = write_sampler.begin();
     }
     return a;
 }

@@ -17,7 +17,7 @@ struct stats_diskmgr_t {
     stats_diskmgr_t(perfmon_collection_t *stats, const std::string &name);
 
     struct action_t : public conflict_resolving_diskmgr_action_t {
-        ticks_t start_time;
+        monotonic_t start_time;
     };
 
     void submit(action_t *a);

@@ -241,8 +241,8 @@ private:
     bool ignore_global_full_perfmon;
 public:
     explicit perfmon_duration_sampler_t(ticks_t length, bool _ignore_global_full_perfmon = false);
-    void begin(ticks_t *v);
-    void end(ticks_t *v);
+    monotonic_t begin();
+    void end(const monotonic_t v);
 
     void *begin_stats();
     void visit_stats(void *data);
@@ -254,17 +254,16 @@ public:
 };
 
 struct block_pm_duration {
-    ticks_t time;
+    monotonic_t time;
     bool ended;
     perfmon_duration_sampler_t *pm;
     explicit block_pm_duration(perfmon_duration_sampler_t *_pm)
-        : ended(false), pm(_pm) {
-        pm->begin(&time);
+        : time(_pm->begin()), ended(false), pm(_pm)  {
     }
     void end() {
         rassert(!ended);
         ended = true;
-        pm->end(&time);
+        pm->end(time);
     }
     ~block_pm_duration() {
         if (!ended) end();

@@ -310,20 +310,19 @@ perfmon_duration_sampler_t::perfmon_duration_sampler_t(ticks_t length, bool _ign
       ignore_global_full_perfmon(_ignore_global_full_perfmon)
 { }
 
-void perfmon_duration_sampler_t::begin(ticks_t *v) {
+monotonic_t perfmon_duration_sampler_t::begin() {
     ++active;
     ++total;
     if (global_full_perfmon || ignore_global_full_perfmon) {
-        *v = get_ticks();
-    } else {
-        *v = ticks_t{0};
+        return clock_monotonic();
     }
+    return monotonic_t{chrono::nanoseconds::zero()};
 }
 
-void perfmon_duration_sampler_t::end(ticks_t *v) {
+void perfmon_duration_sampler_t::end(const monotonic_t v) {
     --active;
-    if (*v != ticks_t::zero()) {
-        recent.record(time_cast<datum_seconds_t>(get_ticks() - *v).count());
+    if (v != monotonic_t{chrono::nanoseconds::zero()}) {
+        recent.record(time_cast<datum_seconds_t>(clock_monotonic() - v).count());
     }
 }
 
