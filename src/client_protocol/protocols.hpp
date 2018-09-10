@@ -16,7 +16,7 @@
 class wire_protocol_t {
 public:
     static const uint32_t HARD_LIMIT_TOO_LARGE_QUERY_SIZE;
-    static const milli_t TOO_LONG_QUERY_TIME;
+    static const chrono::milliseconds TOO_LONG_QUERY_TIME;
     static const uint32_t TOO_LARGE_QUERY_SIZE;
     static const uint32_t TOO_LARGE_RESPONSE_SIZE;
 

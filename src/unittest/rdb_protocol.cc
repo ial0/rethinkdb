@@ -245,7 +245,7 @@ void wait_for_sindex(
         if (all_ok) {
             return;
         }
-        nap((attempts + 1) * milli_t{50});
+        nap((attempts + 1) * chrono::milliseconds{50});
     }
     ADD_FAILURE() << "Waiting for sindex " << id << " timed out.";
 }
@@ -476,7 +476,7 @@ void fuzz_sindex(namespace_interface_t *nsi,
             ADD_FAILURE() << "got wrong type of result back";
         }
 
-        nap(milli_t{2});
+        nap(chrono::milliseconds{2});
     }
 }
 
@@ -496,7 +496,7 @@ void run_fuzz_create_drop_sindex(
     });
 
     /* Let some time pass to allow `fuzz_sindex` to populate the table. */
-    nap(milli_t{2} * num_docs);
+    nap(chrono::milliseconds{2} * num_docs);
 
     /* Create a secondary index (this will post construct the index while under load). */
     std::string id = create_sindex(stores);
@@ -545,7 +545,7 @@ void run_repeated_sindex_test(
     // Nap for a random time before we shut down the namespace interface
     // (in 3 out of 4 cases).
     if (randint(4) != 0) {
-        nap(milli_t{randint(200)});
+        nap(chrono::milliseconds{randint(200)});
     }
 }
 

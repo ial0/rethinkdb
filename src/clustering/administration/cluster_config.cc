@@ -156,7 +156,7 @@ bool cluster_config_artificial_table_backend_t::heartbeat_doc_t::write(
     {
         on_thread_t thread_switcher(sl_view->home_thread());
         heartbeat_semilattice_metadata_t metadata = sl_view->get();
-        metadata.heartbeat_timeout.set(from_datum_time<milli_t>(heartbeat_timeout));
+        metadata.heartbeat_timeout.set(from_datum_time<chrono::milliseconds>(heartbeat_timeout));
         sl_view->join(metadata);
     }
 

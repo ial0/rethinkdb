@@ -39,7 +39,7 @@ public:
 
     // Used for worker configuration
     struct req_config_t {
-        milli_t timeout_ms;
+        chrono::milliseconds timeout_ms;
     };
 
     void begin(extproc_pool_t *pool,

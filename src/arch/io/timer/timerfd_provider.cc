@@ -46,8 +46,8 @@ void timerfd_provider_t::schedule_oneshot(const monotonic_t next_time, timer_pro
     struct itimerspec spec;
     spec.it_interval.tv_sec = 0;
     spec.it_interval.tv_nsec = 0;
-    spec.it_value.tv_sec = time_cast<seconds_t>(wait_nanos).count();
-    spec.it_value.tv_nsec = (wait_nanos % seconds_t{1}).count();
+    spec.it_value.tv_sec = time_cast<chrono::seconds>(wait_nanos).count();
+    spec.it_value.tv_nsec = (wait_nanos % chrono::seconds{1}).count();
 
     const int res = timerfd_settime(timer_fd, 0, &spec, nullptr);
     guarantee_err(res == 0, "Could not arm the timer.");

@@ -184,7 +184,7 @@ void run_until_satisfied_apply(const callable_type &_fun, const value_type *val,
 template<class value_type>
 template<class callable_type>
 void watchable_t<value_type>::run_until_satisfied(const callable_type &fun,
-        signal_t *interruptor, milli_t nap_before_retry_ms) THROWS_ONLY(interrupted_exc_t) {
+        signal_t *interruptor, chrono::milliseconds nap_before_retry_ms) THROWS_ONLY(interrupted_exc_t) {
     assert_thread();
 
     bool is_done = false;
@@ -209,7 +209,7 @@ void watchable_t<value_type>::run_until_satisfied(const callable_type &fun,
         // Nap a little so changes to the watchables can accumulate.
         // This is purely a performance optimization to save CPU cycles,
         // in case that applying `fun` is expensive.
-        if (nap_before_retry_ms > milli_t::zero()) {
+        if (nap_before_retry_ms > chrono::milliseconds::zero()) {
             nap(nap_before_retry_ms, interruptor);
         }
         wait_interruptible(&changed, interruptor);
@@ -222,7 +222,7 @@ void run_until_satisfied_2(
         const clone_ptr_t<watchable_t<b_type> > &b,
         const callable_type &fun,
         signal_t *interruptor,
-        milli_t nap_before_retry_ms) THROWS_ONLY(interrupted_exc_t) {
+        chrono::milliseconds nap_before_retry_ms) THROWS_ONLY(interrupted_exc_t) {
     a->assert_thread();
     b->assert_thread();
 
@@ -249,7 +249,7 @@ void run_until_satisfied_2(
         // Nap a little so changes to the watchables can accumulate.
         // This is purely a performance optimization to save CPU cycles,
         // in case that applying `fun` is expensive.
-        if (nap_before_retry_ms > milli_t::zero()) {
+        if (nap_before_retry_ms > chrono::milliseconds::zero()) {
             nap(nap_before_retry_ms, interruptor);
         }
         wait_interruptible(&changed, interruptor);

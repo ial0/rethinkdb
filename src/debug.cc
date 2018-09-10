@@ -113,10 +113,10 @@ debug_timer_t::~debug_timer_t() {
 #endif // NDEBUG
 }
 
-micro_t debug_timer_t::tick(const std::string &tag) {
+chrono::microseconds debug_timer_t::tick(const std::string &tag) {
     auto prev = last;
     last = clock_realtime();
     out += strprintf("TIMER %s: %15s (%s %12" PRIu64 " %12" PRIu64 ")\n",
                      name.c_str(), tag.c_str(), format_time(last, local_or_utc_time_t::local).c_str(), (last - start).count(), (last - prev).count());
-    return time_cast<micro_t>(last - start);
+    return time_cast<chrono::microseconds>(last - start);
 }

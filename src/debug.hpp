@@ -84,7 +84,7 @@ class debug_timer_t {
 public:
     explicit debug_timer_t(std::string _name = "");
     ~debug_timer_t();
-    micro_t tick(const std::string &tag);
+    chrono::microseconds tick(const std::string &tag);
 private:
     realtime_t start, last;
     std::string name, out;

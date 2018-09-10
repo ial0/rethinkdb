@@ -33,7 +33,7 @@ public:
 private:
     void attempt_read(int expected_value, fifo_enforcer_read_token_t token, auto_drainer_t::lock_t) {
         if (rng.randint(2) == 0) {
-            nap(milli_t{rng.randint(10)});
+            nap(chrono::milliseconds{rng.randint(10)});
         }
         fifo_enforcer_sink_t::exit_read_t exit(&sink, token);
         exit.wait_lazily_unordered();
@@ -41,7 +41,7 @@ private:
     }
     void attempt_write(int expected_value, int new_value, fifo_enforcer_write_token_t token, auto_drainer_t::lock_t) {
         if (rng.randint(2) == 0) {
-            nap(milli_t{rng.randint(10)});
+            nap(chrono::milliseconds{rng.randint(10)});
         }
         fifo_enforcer_sink_t::exit_write_t exit(&sink, token);
         exit.wait_lazily_unordered();
@@ -78,7 +78,7 @@ TPTEST(FIFOEnforcer, StateTransfer) {
     {
         try {
             signal_timer_t interruptor;
-            interruptor.start(seconds_t{1});
+            interruptor.start(chrono::seconds{1});
             fifo_enforcer_sink_t::exit_write_t fifo_exit(&sink, tok2);
             wait_interruptible(&fifo_exit, &interruptor);
         } catch (const interrupted_exc_t &) {

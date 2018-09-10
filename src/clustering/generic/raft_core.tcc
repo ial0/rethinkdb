@@ -315,7 +315,7 @@ void raft_member_t<state_t>::check_invariants(
     std::vector<scoped_ptr_t<new_mutex_acq_t> > mutex_acqs;
     for (raft_member_t<state_t> *member : members) {
         signal_timer_t timeout;
-        timeout.start(seconds_t{10});
+        timeout.start(chrono::seconds{10});
         try {
             scoped_ptr_t<new_mutex_acq_t> mutex_acq(
                 new new_mutex_acq_t(&member->mutex, &timeout));
@@ -1320,7 +1320,7 @@ void raft_member_t<state_t>::candidate_and_leader_coro(
             the current timeout. */
             election_timeout.start(
                 retry_election_timeout / 2 +
-                    milli_t{randuint64((retry_election_timeout / 2).count())});
+                    chrono::milliseconds{randuint64((retry_election_timeout / 2).count())});
 
             /* Increase the timeout exponentially (by 1.5) for the next run: */
             retry_election_timeout += retry_election_timeout / 2;
@@ -1537,7 +1537,7 @@ bool raft_member_t<state_t>::candidate_run_election(
         coro_t::spawn_sometime([this, &votes_for_us, &we_won_the_election, peer,
                 &request, request_vote_keepalive /* important to capture */]() {
             try {
-                exponential_backoff_t backoff(milli_t{100}, seconds_t{2});
+                exponential_backoff_t backoff(chrono::milliseconds{100}, chrono::seconds{2});
                 while (true) {
                     /* Don't bother trying to send an RPC until the peer is present in
                     `get_connected_members()`. */
@@ -1732,7 +1732,7 @@ void raft_member_t<state_t>::leader_send_updates(
         the peer to appear in `get_connected_members()`. This prevents us from locking up
         the CPU if the peer is in `get_connected_members()` but always fails RPCs
         immediately. */
-        exponential_backoff_t backoff(milli_t{100}, seconds_t{1});
+        exponential_backoff_t backoff(chrono::milliseconds{100}, chrono::seconds{1});
 
         /* This implementation deviates slightly from the Raft paper in that the initial
         message may not be an empty append-entries RPC. Because `leader_send_updates()`

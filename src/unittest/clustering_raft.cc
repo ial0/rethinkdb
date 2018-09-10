@@ -17,26 +17,26 @@ TPTEST(ClusteringRaft, Basic) {
     /* Spin up a Raft cluster and wait for it to elect a leader */
     dummy_raft_cluster_t cluster(5, dummy_raft_state_t(), nullptr);
     /* Do some writes and check the result */
-    do_writes_raft(&cluster, 100, seconds_t{60});
+    do_writes_raft(&cluster, 100, chrono::seconds{60});
 }
 
 void failover_test(dummy_raft_cluster_t::live_t failure_type) {
     std::vector<raft_member_id_t> member_ids;
     dummy_raft_cluster_t cluster(5, dummy_raft_state_t(), &member_ids);
     dummy_raft_traffic_generator_t traffic_generator(&cluster, 3);
-    do_writes_raft(&cluster, 100, seconds_t{60});
+    do_writes_raft(&cluster, 100, chrono::seconds{60});
     cluster.set_live(member_ids[0], failure_type);
     cluster.set_live(member_ids[1], failure_type);
-    do_writes_raft(&cluster, 100, seconds_t{60});
+    do_writes_raft(&cluster, 100, chrono::seconds{60});
     cluster.set_live(member_ids[2], failure_type);
     cluster.set_live(member_ids[3], failure_type);
     cluster.set_live(member_ids[0], dummy_raft_cluster_t::live_t::alive);
     cluster.set_live(member_ids[1], dummy_raft_cluster_t::live_t::alive);
-    do_writes_raft(&cluster, 100, seconds_t{60});
+    do_writes_raft(&cluster, 100, chrono::seconds{60});
     cluster.set_live(member_ids[4], failure_type);
     cluster.set_live(member_ids[2], dummy_raft_cluster_t::live_t::alive);
     cluster.set_live(member_ids[3], dummy_raft_cluster_t::live_t::alive);
-    do_writes_raft(&cluster, 100, seconds_t{60});
+    do_writes_raft(&cluster, 100, chrono::seconds{60});
     ASSERT_LT(100, traffic_generator.get_num_changes());
     traffic_generator.check_changes_present();
 }
@@ -56,15 +56,15 @@ TPTEST(ClusteringRaft, MemberChange) {
     dummy_raft_traffic_generator_t traffic_generator(&cluster, 3);
     for (size_t i = 0; i < 10; ++i) {
         /* Do some test writes */
-        do_writes_raft(&cluster, 10, seconds_t{60});
+        do_writes_raft(&cluster, 10, chrono::seconds{60});
 
         /* Kill one member and do some more test writes */
         cluster.set_live(member_ids[i], dummy_raft_cluster_t::live_t::dead);
-        do_writes_raft(&cluster, 10, seconds_t{60});
+        do_writes_raft(&cluster, 10, chrono::seconds{60});
 
         /* Add a replacement member and do some more test writes */
         member_ids.push_back(cluster.join());
-        do_writes_raft(&cluster, 10, seconds_t{60});
+        do_writes_raft(&cluster, 10, chrono::seconds{60});
 
         /* Update the configuration and do some more test writes */
         raft_config_t new_config;
@@ -72,10 +72,10 @@ TPTEST(ClusteringRaft, MemberChange) {
             new_config.voting_members.insert(member_ids[n]);
         }
         signal_timer_t timeout;
-        timeout.start(seconds_t{10});
+        timeout.start(chrono::seconds{10});
         raft_member_id_t leader = cluster.find_leader(&timeout);
         cluster.try_config_change(leader, new_config, &timeout);
-        do_writes_raft(&cluster, 10, seconds_t{60});
+        do_writes_raft(&cluster, 10, chrono::seconds{60});
     }
     ASSERT_LT(100, traffic_generator.get_num_changes());
     traffic_generator.check_changes_present();
@@ -84,10 +84,10 @@ TPTEST(ClusteringRaft, MemberChange) {
 TPTEST(ClusteringRaft, NonVoting) {
     dummy_raft_cluster_t cluster(1, dummy_raft_state_t(), nullptr);
     dummy_raft_traffic_generator_t traffic_generator(&cluster, 3);
-    do_writes_raft(&cluster, 10, seconds_t{60});
+    do_writes_raft(&cluster, 10, chrono::seconds{60});
 
     raft_config_t new_config;
-    new_config.voting_members.insert(cluster.find_leader(seconds_t{1}));
+    new_config.voting_members.insert(cluster.find_leader(chrono::seconds{1}));
     new_config.voting_members.insert(cluster.join());
     new_config.voting_members.insert(cluster.join());
     new_config.non_voting_members.insert(cluster.join());
@@ -95,17 +95,17 @@ TPTEST(ClusteringRaft, NonVoting) {
     new_config.non_voting_members.insert(cluster.join());
 
     signal_timer_t timeout;
-    timeout.start(seconds_t{10});
+    timeout.start(chrono::seconds{10});
     raft_member_id_t leader = cluster.find_leader(&timeout);
     cluster.try_config_change(leader, new_config, &timeout);
 
-    do_writes_raft(&cluster, 10, seconds_t{60});
+    do_writes_raft(&cluster, 10, chrono::seconds{60});
 
     for (const raft_member_id_t &member : new_config.non_voting_members) {
         cluster.set_live(member, dummy_raft_cluster_t::live_t::dead);
     }
 
-    do_writes_raft(&cluster, 10, seconds_t{60});
+    do_writes_raft(&cluster, 10, chrono::seconds{60});
 
     traffic_generator.check_changes_present();
 }
@@ -115,8 +115,8 @@ TPTEST(ClusteringRaft, Regression4234) {
     std::vector<raft_member_id_t> member_ids;
     dummy_raft_cluster_t cluster(2, dummy_raft_state_t(), &member_ids);
     dummy_raft_traffic_generator_t traffic_generator(&cluster, 3);
-    do_writes_raft(&cluster, 10, seconds_t{60});
-    raft_member_id_t leader = cluster.find_leader(seconds_t{1});
+    do_writes_raft(&cluster, 10, chrono::seconds{60});
+    raft_member_id_t leader = cluster.find_leader(chrono::seconds{1});
 
     raft_config_t new_config;
     for (const raft_member_id_t &member : member_ids) {
@@ -136,11 +136,11 @@ TPTEST(ClusteringRaft, Regression4234) {
 
     /* This test is probabilistic. When the bug was present, the test failed about
     20% of the time. */
-    nap(milli_t{randint(30)}, &non_interruptor);
+    nap(chrono::milliseconds{randint(30)}, &non_interruptor);
     cluster.set_live(leader, dummy_raft_cluster_t::live_t::dead);
     cluster.set_live(leader, dummy_raft_cluster_t::live_t::alive);
 
-    do_writes_raft(&cluster, 10, seconds_t{60});
+    do_writes_raft(&cluster, 10, chrono::seconds{60});
     traffic_generator.check_changes_present();
 }
 

@@ -132,7 +132,7 @@ private:
 class js_func_t : public func_t {
 public:
     js_func_t(const std::string &_js_source,
-              milli_t timeout_ms,
+              chrono::milliseconds timeout_ms,
               backtrace_id_t backtrace);
     ~js_func_t();
 
@@ -156,7 +156,7 @@ private:
     bool filter_helper(env_t *env, datum_t arg) const;
 
     std::string js_source;
-    milli_t js_timeout_ms;
+    chrono::milliseconds js_timeout_ms;
 
     DISABLE_COPYING(js_func_t);
 };
@@ -182,7 +182,7 @@ counted_t<const func_t> new_page_func(datum_t method, backtrace_id_t bt);
 class js_result_visitor_t : public boost::static_visitor<val_t *> {
 public:
     js_result_visitor_t(const std::string &_code,
-                        milli_t _timeout_ms,
+                        chrono::milliseconds _timeout_ms,
                         const bt_rcheckable_t *_parent)
         : code(_code),
           timeout_ms(_timeout_ms),
@@ -200,7 +200,7 @@ public:
 
 private:
     std::string code;
-    milli_t timeout_ms;
+    chrono::milliseconds timeout_ms;
     const bt_rcheckable_t *parent;
 };
 

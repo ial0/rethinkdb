@@ -112,7 +112,7 @@ struct http_opts_t {
     // ReQL version in use
     reql_version_t version;
 
-    milli_t timeout_ms;
+    chrono::milliseconds timeout_ms;
     uint64_t attempts;
     uint32_t max_redirects;
 

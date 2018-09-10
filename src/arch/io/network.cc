@@ -1132,7 +1132,7 @@ void linux_secure_tcp_conn_t::shutdown() {
 
     // Wait at most 5 seconds for the orderly shutdown. If it doesn't complete by then,
     // we simply shutdown the socket.
-    signal_timer_t shutdown_timeout(5000);
+    signal_timer_t shutdown_timeout(chrono::seconds{5});
 
     bool skip_shutdown = false; // Set to true if TLS shutdown encounters an error.
 
@@ -1602,7 +1602,7 @@ fd_t linux_nonthrowing_tcp_listener_t::wait_for_any_socket(const auto_drainer_t:
 #endif
 
 void linux_nonthrowing_tcp_listener_t::accept_loop(auto_drainer_t::lock_t lock) {
-    exponential_backoff_t backoff(milli_t{10}, milli_t{160}, 2.0, 0.5);
+    exponential_backoff_t backoff(chrono::milliseconds{10}, chrono::milliseconds{160}, 2.0, 0.5);
 
 #ifdef _WIN32
 
@@ -1722,9 +1722,9 @@ void linux_repeated_nonthrowing_tcp_listener_t::retry_loop(auto_drainer_t::lock_
     try {
         bool bound = listener.begin_listening();
 
-        for (auto retry_interval = seconds_t{1};
+        for (auto retry_interval = chrono::seconds{1};
              !bound;
-             retry_interval = std::min(seconds_t{10}, retry_interval + seconds_t{2})) {
+             retry_interval = std::min(chrono::seconds{10}, retry_interval + chrono::seconds{2})) {
             logNTC("Will retry binding to port %d in %ld seconds.\n",
                    listener.get_port(),
                    retry_interval.count());

@@ -14,7 +14,7 @@ static const int64_t DEFAULT_MIN_ELS = 1;
 static const int64_t DEFAULT_FIRST_SCALEDOWN = 4;
 static const int64_t DEFAULT_MAX_SIZE = MEGABYTE;
 // The maximum duration of a batch in microseconds.
-static const micro_t DEFAULT_MAX_DURATION = milli_t{500};
+static const chrono::microseconds DEFAULT_MAX_DURATION = chrono::milliseconds{500};
 // These numbers are sort of arbitrary, but they seem to work. See `scale_down()`
 // for an explanation.
 static const int64_t DIVISOR_SCALING_FACTOR = 8;
@@ -32,7 +32,7 @@ batchspec_t::batchspec_t(
     int64_t _max_els,
     int64_t _max_size,
     int64_t _first_scaledown,
-    micro_t _max_dur,
+    chrono::microseconds _max_dur,
     monotonic_t _start_time)
     : batch_type(_batch_type),
       min_els(_min_els),
@@ -46,7 +46,7 @@ batchspec_t::batchspec_t(
     r_sanity_check(min_els >= 1);
     r_sanity_check(max_els >= min_els);
     r_sanity_check(max_size >= 1);
-    r_sanity_check(max_dur >= seconds_t::zero());
+    r_sanity_check(max_dur >= chrono::seconds::zero());
 }
 
 batchspec_t batchspec_t::default_for(batch_type_t batch_type) {
@@ -65,7 +65,7 @@ batchspec_t batchspec_t::all() {
                        std::numeric_limits<decltype(batchspec_t().max_els)>::max(),
                        std::numeric_limits<decltype(batchspec_t().max_size)>::max(),
                        1,
-                       micro_t::zero(),  // Ignored when batch_type is TERMINAL.
+                       chrono::microseconds::zero(),  // Ignored when batch_type is TERMINAL.
 					   clock_monotonic());
 }
 
@@ -123,7 +123,7 @@ batchspec_t batchspec_t::user(batch_type_t batch_type, env_t *env) {
                       PR_RECONSTRUCTABLE_DOUBLE "`).",
                       max_dur_d.as_num()));
 
-        max_dur = time_cast<micro_t>(datum_seconds_t{max_dur_d.as_num()});
+        max_dur = time_cast<chrono::microseconds>(datum_seconds_t{max_dur_d.as_num()});
     }
     // Protect the user in case they're a dork.  Normally we would do rfail and
     // trigger exceptions, but due to NOTHROWs above this may not be safe.
@@ -147,7 +147,7 @@ batchspec_t batchspec_t::with_min_els(int64_t new_min_els) const {
                        first_scaledown_factor, max_dur, start_time);
 }
 
-batchspec_t batchspec_t::with_max_dur(micro_t new_max_dur) const {
+batchspec_t batchspec_t::with_max_dur(chrono::microseconds new_max_dur) const {
     return batchspec_t(batch_type, min_els, max_els, max_size,
                        first_scaledown_factor, new_max_dur, start_time);
 }
@@ -260,7 +260,7 @@ void serialize(write_message_t *wm, const batchspec_t &batchspec) {
     auto current_time = clock_monotonic();
     //static_assert(sizeof(uint64_t) >= sizeof(current_kiloticks),
     //              "Incorrect type for duration, it might overflow");
-    micro_t duration = time_cast<micro_t>(current_time - std::min(batchspec.start_time, current_time));
+    chrono::microseconds duration = time_cast<chrono::microseconds>(current_time - std::min(batchspec.start_time, current_time));
     serialize<W>(wm, duration);
 }
 INSTANTIATE_SERIALIZE_FOR_CLUSTER(batchspec_t);
@@ -286,7 +286,7 @@ archive_result_t deserialize(read_stream_t *s, batchspec_t *batchspec) {
     res = deserialize<W>(s, deserialize_deref(batchspec->max_dur));
     if (bad(res)) { return res; }
 
-    micro_t duration = micro_t::zero();
+    chrono::microseconds duration = chrono::microseconds::zero();
     //static_assert(sizeof(uint64_t) >= sizeof(kiloticks_t),
     //              "Incorrect type for duration, it might overflow");
     res = deserialize<W>(s, &duration);

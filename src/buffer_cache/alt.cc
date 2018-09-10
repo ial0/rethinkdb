@@ -103,7 +103,7 @@ void alt_txn_throttler_t::inform_memory_limit_change(uint64_t memory_limit,
     unwritten_block_changes_semaphore_.set_capacity(throttler_limit);
 }
 
-milli_t clamp_ring_length(which_cpu_shard_t w, milli_t interval) {
+chrono::milliseconds clamp_ring_length(which_cpu_shard_t w, chrono::milliseconds interval) {
     if (w.which_shard == 0) {
         return interval;
     } else {
@@ -135,7 +135,7 @@ cache_t::~cache_t() {
 }
 
 void cache_t::configure_flush_interval(flush_interval_t interval) {
-    rassert(interval.millis > milli_t::zero());
+    rassert(interval.millis > chrono::milliseconds::zero());
     soft_durability_flusher_.change_interval(interval.millis);
     soft_durability_flusher_.clamp_next_ring(
         clamp_ring_length(which_cpu_shard_, interval.millis));

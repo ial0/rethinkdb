@@ -11,7 +11,7 @@ TEST(LogMessageTest, ParseFormat) {
     auto timestamp = clock_realtime();
     auto uptime = clock_monotonic();
 
-    log_message_t message(timestamp, time_cast<micro_t>(uptime.time_since_epoch()), log_level_info, "test message *(&Q(!#@LJVO");
+    log_message_t message(timestamp, time_cast<chrono::microseconds>(uptime.time_since_epoch()), log_level_info, "test message *(&Q(!#@LJVO");
     std::string formatted = format_log_message(message);
     log_message_t parsed = parse_log_message(formatted);
     EXPECT_EQ(message.timestamp, parsed.timestamp);

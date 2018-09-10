@@ -63,7 +63,7 @@ multi_table_manager_timestamp_t::epoch_t::make(const epoch_t &prev) {
 
     epoch_t e;
     e.id = generate_uuid();
-    e.timestamp = std::max(clock_realtime(), old_timestamp + micro_t{1});
+    e.timestamp = std::max(clock_realtime(), old_timestamp + chrono::microseconds{1});
     return e;
 }
 

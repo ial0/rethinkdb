@@ -100,7 +100,7 @@ bool reql_func_t::is_simple_selector() const {
 }
 
 js_func_t::js_func_t(const std::string &_js_source,
-                     milli_t timeout_ms,
+                     chrono::milliseconds timeout_ms,
                      backtrace_id_t _backtrace)
     : func_t(_backtrace),
       js_source(_js_source),

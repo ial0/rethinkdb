@@ -71,7 +71,7 @@ public:
 
     std::string expired_error_message() const;
 private:
-    static constexpr milli_t TIMER_RESOLUTION_MS = seconds_t{5};
+    static constexpr chrono::milliseconds TIMER_RESOLUTION_MS = chrono::seconds{5};
 
     // Random number generator used for generating cryptographic connection IDs
     std::mt19937 key_generator;

@@ -11,11 +11,11 @@
 
 const size_t js_runner_t::CACHE_SIZE = 100;
 
-auto query_timeout_string(const char * str, const milli_t timeout)
+auto query_timeout_string(const char * str, const chrono::milliseconds timeout)
 {
     return strprintf(
         "JavaScript query `%s` timed out after %" PRIu64 ".%03" PRIu64 " seconds.",
-        str, time_cast<seconds_t>(timeout).count(), (timeout % seconds_t{1}).count());
+        str, time_cast<chrono::seconds>(timeout).count(), (timeout % chrono::seconds{1}).count());
 }
 
 // This class allows us to manage timeouts in a cleaner manner
@@ -25,7 +25,7 @@ public:
     //  will run the timer for the duration it is in scope
     class sentry_t {
     public:
-        sentry_t(js_timeout_t *_parent, milli_t timeout_ms) :
+        sentry_t(js_timeout_t *_parent, chrono::milliseconds timeout_ms) :
             parent(_parent) {
             if (parent->timer.is_pulsed()) {
                 throw interrupted_exc_t();

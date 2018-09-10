@@ -68,7 +68,7 @@ rdb_context_t::stats_t::stats_t(perfmon_collection_t *global_stats)
                                     &client_connections, "client_connections"),
       clients_active_membership(&qe_stats_collection,
                                 &clients_active, "clients_active"),
-      queries_per_sec(seconds_t{1}),
+      queries_per_sec(chrono::seconds{1}),
       queries_per_sec_membership(&qe_stats_collection,
                                  &queries_per_sec, "queries_per_sec"),
       queries_total_membership(&qe_stats_collection,

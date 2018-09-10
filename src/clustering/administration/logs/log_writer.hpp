@@ -24,10 +24,10 @@ RDB_DECLARE_SERIALIZABLE(timespec_t);
 class log_message_t {
 public:
     log_message_t() { }
-    log_message_t(timespec_t t, micro_t u, log_level_t l, std::string m) :
+    log_message_t(timespec_t t, chrono::microseconds u, log_level_t l, std::string m) :
         timestamp(t), uptime(u), level(l), message(m) { }
     timespec_t timestamp;
-    micro_t uptime;
+    chrono::microseconds uptime;
     log_level_t level;
     std::string message;
 };

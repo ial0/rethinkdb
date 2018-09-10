@@ -131,7 +131,7 @@ bool server_config_client_t::set_config(
     /* Wait up to 10 seconds for the change to appear in the directory. */
     try {
         signal_timer_t timeout;
-        timeout.start(seconds_t{10});
+        timeout.start(chrono::seconds{10});
         wait_any_t waiter(interruptor, &timeout);
         server_config_map.run_key_until_satisfied(
             server_id,

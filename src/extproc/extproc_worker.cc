@@ -109,7 +109,7 @@ void extproc_worker_t::released(bool user_error, signal_t *user_interruptor) {
         signal_timer_t timeout;
         wait_any_t final_interruptor(&timeout, interruptor);
         socket_stream->set_interruptor(&final_interruptor);
-        timeout.start(milli_t{100}); // Allow 100ms for the child to respond
+        timeout.start(chrono::milliseconds{100}); // Allow 100ms for the child to respond
 
         // Trade magic numbers with worker process to see if it is still coherent
         try {

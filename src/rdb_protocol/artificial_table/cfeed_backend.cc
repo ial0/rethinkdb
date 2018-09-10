@@ -6,7 +6,7 @@
 #include "rdb_protocol/env.hpp"
 
 /* We destroy the machinery if there have been no changefeeds for this many seconds */
-static const seconds_t machinery_expiration_secs{60};
+static const chrono::seconds machinery_expiration_secs{60};
 
 void cfeed_artificial_table_backend_t::machinery_t::send_all_change(
         const new_mutex_acq_t *proof,

@@ -137,7 +137,7 @@ archive_result_t deserialize(read_stream_t *s, wire_func_t *wf) {
         res = deserialize<W>(s, &js_source);
         if (bad(res)) { return res; }
 
-        milli_t js_timeout_ms;
+        chrono::milliseconds js_timeout_ms;
         res = deserialize<W>(s, &js_timeout_ms);
         if (bad(res)) { return res; }
 
@@ -202,7 +202,7 @@ archive_result_t deserialize_wire_func(
         res = deserialize<W>(s, &js_source);
         if (bad(res)) { return res; }
 
-        milli_t js_timeout_ms;
+        chrono::milliseconds js_timeout_ms;
         res = deserialize<W>(s, &js_timeout_ms);
         if (bad(res)) { return res; }
 

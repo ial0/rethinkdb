@@ -35,8 +35,8 @@ TPTEST(RPCDirectoryTest, ThreeNodes) {
     test_cluster_run_t cr1(&c1);
     test_cluster_run_t cr2(&c2);
     test_cluster_run_t cr3(&c3);
-    cr2.join(get_cluster_local_address(&c1), seconds_t::zero());
-    cr3.join(get_cluster_local_address(&c1), seconds_t::zero());
+    cr2.join(get_cluster_local_address(&c1), chrono::seconds::zero());
+    cr3.join(get_cluster_local_address(&c1), chrono::seconds::zero());
     let_stuff_happen();
 }
 
@@ -51,8 +51,8 @@ TPTEST(RPCDirectoryTest, Exchange) {
     test_cluster_run_t cr1(&c1);
     test_cluster_run_t cr2(&c2);
     test_cluster_run_t cr3(&c3);
-    cr2.join(get_cluster_local_address(&c1), seconds_t::zero());
-    cr3.join(get_cluster_local_address(&c1), seconds_t::zero());
+    cr2.join(get_cluster_local_address(&c1), chrono::seconds::zero());
+    cr3.join(get_cluster_local_address(&c1), chrono::seconds::zero());
     let_stuff_happen();
     EXPECT_EQ(1u, rm1.get_root_view()->get().get_inner().count(c1.get_me()));
     EXPECT_EQ(101, rm1.get_root_view()->get().get_inner().find(c1.get_me())->second);
@@ -73,8 +73,8 @@ TPTEST(RPCDirectoryTest, Update) {
     test_cluster_run_t cr1(&c1);
     test_cluster_run_t cr2(&c2);
     test_cluster_run_t cr3(&c3);
-    cr2.join(get_cluster_local_address(&c1), seconds_t::zero());
-    cr3.join(get_cluster_local_address(&c1), seconds_t::zero());
+    cr2.join(get_cluster_local_address(&c1), chrono::seconds::zero());
+    cr3.join(get_cluster_local_address(&c1), chrono::seconds::zero());
     let_stuff_happen();
     w1.set_value(151);
     let_stuff_happen();
@@ -98,8 +98,8 @@ TPTEST(RPCDirectoryTest, MapUpdate) {
     test_cluster_run_t cr1(&c1);
     test_cluster_run_t cr2(&c2);
     test_cluster_run_t cr3(&c3);
-    cr2.join(get_cluster_local_address(&c1), seconds_t::zero());
-    cr3.join(get_cluster_local_address(&c1), seconds_t::zero());
+    cr2.join(get_cluster_local_address(&c1), chrono::seconds::zero());
+    cr3.join(get_cluster_local_address(&c1), chrono::seconds::zero());
     let_stuff_happen();
     ASSERT_TRUE(optional<int>(1) ==
         rm2.get_root_view()->get_key(std::make_pair(c1.get_me(), 101)));

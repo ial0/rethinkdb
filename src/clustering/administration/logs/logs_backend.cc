@@ -12,7 +12,7 @@ ql::datum_t convert_timespec_to_datum(const timespec_t &t) {
         to_datum_time<datum_seconds_t>(t.time_since_epoch()).count(), "+00:00");
 }
 
-ql::datum_t convert_duration_to_datum(const micro_t &d) {
+ql::datum_t convert_duration_to_datum(const chrono::microseconds &d) {
     //t.tv_sec + static_cast<double>(t.tv_nsec) / BILLION
     return ql::datum_t(to_datum_time<datum_seconds_t>(d).count());
 }
@@ -260,7 +260,7 @@ void logs_artificial_table_backend_t::cfeed_machinery_t::run(
     guarantee(!starting, "starting should be set to false before run() actually starts");
 
     /* `poll_interval_ms` is how long to wait between polling for new messages. */
-    static const milli_t poll_interval_ms = seconds_t{1};
+    static const chrono::milliseconds poll_interval_ms = chrono::seconds{1};
 
     try {
         /* First, fetch the initial value of the latest timestamp in the log. The reason
@@ -338,7 +338,7 @@ void logs_artificial_table_backend_t::cfeed_machinery_t::run(
             std::vector<log_message_t> messages;
             try {
                 /* We choose `min_time` so as to exclude the last message from before */
-                timespec_t min_time = *last_timestamp.get_value() + nano_t{1};
+                timespec_t min_time = *last_timestamp.get_value() + chrono::nanoseconds{1};
                 timespec_t max_time = timespec_t::max();
                 messages = fetch_log_file(
                     parent->mailbox_manager,

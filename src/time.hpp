@@ -68,17 +68,16 @@ using microtime_t = std::chrono::duration<uint64_t, std::micro>;
 
 using ticks_t = std::chrono::duration<int64_t, std::nano>;
 
-using seconds_t = std::chrono::duration<int64_t>;
-using minute_t = std::chrono::duration<int64_t, std::ratio<60,1>>;
-using milli_t = std::chrono::duration<int64_t, std::milli>;
-using micro_t = std::chrono::duration<int64_t, std::micro>;
-using nano_t = std::chrono::duration<int64_t, std::nano>;
+namespace chrono {
+	using namespace std::chrono;
+
+	using hours  = std::chrono::duration<int64_t, std::ratio<3600>>;
+	using days = std::chrono::duration<int64_t, std::ratio<86400>>;
+}
 
 using datum_seconds_t = std::chrono::duration<double>;
 using datum_milli_t = std::chrono::duration<double, std::milli>;
 using datum_micro_t = std::chrono::duration<double, std::micro>;
-
-namespace cpp14 {
 
 template <class To, class Rep, class Period>
 constexpr To ceil(const std::chrono::duration<Rep, Period>& d)
@@ -89,7 +88,6 @@ constexpr To ceil(const std::chrono::duration<Rep, Period>& d)
     return t;
 }
 
-}
 
 template <cluster_version_t W, typename R>
 void serialize(write_message_t *wm, const std::chrono::duration<double, R> &s) {
@@ -101,7 +99,7 @@ MUST_USE archive_result_t deserialize(read_stream_t *s, std::chrono::duration<do
     double d;
     archive_result_t res = deserialize<W>(s, &d);
     if (bad(res)) { return res; }
-    *p = datum_milli_t{d};
+    *p = std::chrono::duration<double, R>{d};
     return res;
 }
 

@@ -228,7 +228,7 @@ timespec_t parse_time(const std::string &str, local_or_utc_time_t zone, std::str
     tm.tm_isdst =  zone == local_or_utc_time_t::utc ? 0 : -1;
     auto clk = time_to_clock(mktime(&tm));
     *errmsg_out = "";
-    return clk + nano_t{n};
+    return clk + chrono::nanoseconds{n};
 }
 
 bool parse_time(const std::string &str, local_or_utc_time_t zone,

@@ -739,13 +739,13 @@ private:
     paper suggests that a typical election timeout should be somewhere between 10ms and
     500ms. We use somewhat larger numbers to reduce server traffic, at the cost of longer
     periods of unavailability when a master dies. */
-    const milli_t election_timeout_min_ms{1000},
+    const chrono::milliseconds election_timeout_min_ms{1000},
                   election_timeout_max_ms{2000};
 
     /* To cope with i/o bottlenecks when many tables are running elections at the same
     time, we additionally increase the election timeout during repeated retries, up to
     the maximum value set here: */
-    const milli_t election_retry_timeout_max_ms = seconds_t{30};
+    const chrono::milliseconds election_retry_timeout_max_ms = chrono::seconds{30};
 
     /* When the number of committed entries in the log exceeds this number, we will take
     a snapshot to compress them. */

@@ -82,9 +82,9 @@ RDB_DECLARE_EQUALITY_COMPARABLE(auth_semilattice_metadata_t);
 class heartbeat_semilattice_metadata_t {
 public:
     heartbeat_semilattice_metadata_t()
-        : heartbeat_timeout(seconds_t{10}) { }
+        : heartbeat_timeout(chrono::seconds{10}) { }
 
-    versioned_t<milli_t> heartbeat_timeout;
+    versioned_t<chrono::milliseconds> heartbeat_timeout;
 };
 
 RDB_DECLARE_SERIALIZABLE(heartbeat_semilattice_metadata_t);

@@ -3,10 +3,11 @@
 
 #include <limits>
 
+#include "time.hpp"
 #include "utils.hpp"
 
 const uint32_t wire_protocol_t::HARD_LIMIT_TOO_LARGE_QUERY_SIZE = GIGABYTE;
-const milli_t wire_protocol_t::TOO_LONG_QUERY_TIME = minute_t{5}; // ms
+const chrono::milliseconds wire_protocol_t::TOO_LONG_QUERY_TIME = chrono::minutes{5};
 const uint32_t wire_protocol_t::TOO_LARGE_QUERY_SIZE = 128 * MEGABYTE;
 const uint32_t wire_protocol_t::TOO_LARGE_RESPONSE_SIZE =
     std::numeric_limits<uint32_t>::max();

@@ -65,7 +65,7 @@ private:
 
     // Timer to trigger worker deallocation.
     repeating_timer_t dealloc_timer;
-    static constexpr milli_t DEALLOC_TIMER_FREQ_MS{2000};
+    static constexpr chrono::milliseconds DEALLOC_TIMER_FREQ_MS{2000};
 
     // Worker deallocation timer callback.
     void on_ring();
@@ -83,5 +83,6 @@ private:
     // `dealloc_blocking()`.
     pump_coro_t dealloc_pumper;
 };
+
 
 #endif /* EXTPROC_EXTPROC_POOL_HPP_ */

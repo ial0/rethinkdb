@@ -239,7 +239,7 @@ public:
             const cpu_contract_ids_t &contract_ids,
             contract_ack_t::state_t state) {
         signal_timer_t timeout;
-        timeout.start(seconds_t{1});
+        timeout.start(chrono::seconds{1});
         try {
             for (size_t i = 0; i < CPU_SHARDING_FACTOR; ++i) {
                 executor->get_acks()->run_key_until_satisfied(
@@ -263,7 +263,7 @@ public:
         guarantee(state == contract_ack_t::state_t::primary_need_branch);
         branch_out->range = contract_ids.range;
         signal_timer_t timeout;
-        timeout.start(seconds_t{1});
+        timeout.start(chrono::seconds{1});
         try {
             for (size_t i = 0; i < CPU_SHARDING_FACTOR; ++i) {
                 executor->get_acks()->run_key_until_satisfied(
@@ -408,7 +408,7 @@ private:
                 if (ack_target_change != nullptr) {
                     ack_target_change->pulse_if_not_already_pulsed();
                 }
-                nap(milli_t{10}, keepalive.get_drain_signal());
+                nap(chrono::milliseconds{10}, keepalive.get_drain_signal());
             }
         } catch (const interrupted_exc_t &) {
             /* ignore */
@@ -557,7 +557,7 @@ TPTEST(ClusteringContractExecutor, SimpleTests) {
     /* We want to make sure that `alice` erased its data. But it will ack `nothing`
     before it actually erases the data. So we wait 100ms before checking for the data to
     be erased. */
-    nap(milli_t{100});
+    nap(chrono::milliseconds{100});
     alice_exec.read_store("hello", "");   /* confirm that data was erased */
 }
 

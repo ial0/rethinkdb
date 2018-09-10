@@ -89,7 +89,7 @@ void http_runner_t::http(const http_opts_t &opts,
         }
         res_out->error =
             strprintf("timed out after %" PRIu64 ".%03" PRIu64 " seconds",
-                      time_cast<seconds_t>(opts.timeout_ms).count(), (opts.timeout_ms % 1000).count());
+                      time_cast<chrono::seconds>(opts.timeout_ms).count(), (opts.timeout_ms % 1000).count());
     } catch (...) {
         // This will mark the worker as errored so we don't try to re-sync with it
         //  on the next line (since we're in a catch statement, we aren't allowed)

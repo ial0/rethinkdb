@@ -10,8 +10,8 @@ auto_reconnector_t::auto_reconnector_t(
         connectivity_cluster_t *connectivity_cluster_,
         connectivity_cluster_t::run_t *connectivity_cluster_run_,
         server_config_client_t *server_config_client_,
-        const seconds_t join_delay_secs_,
-        const milli_t give_up_ms_) :
+        const chrono::seconds join_delay_secs_,
+        const chrono::milliseconds give_up_ms_) :
     connectivity_cluster(connectivity_cluster_),
     connectivity_cluster_run(connectivity_cluster_run_),
     server_config_client(server_config_client_),
@@ -82,7 +82,7 @@ void auto_reconnector_t::try_reconnect(const server_id_t &server,
     cond_t join_failed;
     wait_any_t interruptor(
         &reconnected, &give_up_timer, keepalive.get_drain_signal(), &join_failed);
-    exponential_backoff_t backoff(milli_t{50}, seconds_t{15});
+    exponential_backoff_t backoff(chrono::milliseconds{50}, chrono::seconds{15});
     try {
         // These can be safely passed into the coroutine below.
         // They will be reset to `nullptr` by the assignment_sentry_ts when this function

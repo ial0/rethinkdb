@@ -9,7 +9,7 @@
 /* `ITEM_ACK_INTERVAL_MS` controls how often we send acknowledgements back to the
 backfiller. If it's too short, we'll waste resources sending lots of tiny
 acknowledgements; if it's too long, the pipeline might stall. */
-constexpr milli_t ITEM_ACK_INTERVAL_MS{100};
+constexpr chrono::milliseconds ITEM_ACK_INTERVAL_MS{100};
 
 /* `backfillee_t::session_t` contains all the bits and pieces for managing a single
 backfill session. It's impossible to have multiple sessions running at once, so in

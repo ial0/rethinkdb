@@ -356,8 +356,8 @@ public:
 };
 
 /* We wait for no more than 10 seconds between polls to the indexes. */
-milli_t initial_poll_ms{50};
-milli_t max_poll_ms = seconds_t{10};
+chrono::milliseconds initial_poll_ms{50};
+chrono::milliseconds max_poll_ms = chrono::seconds{10};
 
 class sindex_wait_term_t : public op_term_t {
 public:

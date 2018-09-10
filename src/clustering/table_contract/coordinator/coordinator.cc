@@ -133,7 +133,7 @@ void contract_coordinator_t::pump_contracts(signal_t *interruptor) {
     /* Wait a little while to give changes time to accumulate, because
     `calculate_all_contracts()` needs to examine every shard of the table even if
     nothing about them has changed, and that might be expensive. */
-    nap(milli_t{200}, interruptor);
+    nap(chrono::milliseconds{200}, interruptor);
 
     /* Now we'll apply changes to Raft. We keep trying in a loop in case it
     doesn't work at first. */
@@ -200,7 +200,7 @@ void contract_coordinator_t::pump_configs(signal_t *interruptor) {
     assert_thread();
 
     while (true) {
-        nap(milli_t{200}, interruptor);
+        nap(chrono::milliseconds{200}, interruptor);
 
         /* Wait until the Raft member is likely to accept config changes. This
         isn't actually necessary for changes to `member_ids`, but it's easier to

@@ -211,7 +211,7 @@ void evicter_t::evict_if_necessary() THROWS_NOTHING {
         // Basically we force a fast flush once every 5 seconds if we've got many
         // unaccounted for dirty pages.
         ticks_t ticks = get_ticks();
-        if (ticks - last_force_flush_time_ > seconds_t{5}) {
+        if (ticks - last_force_flush_time_ > chrono::seconds{5}) {
             last_force_flush_time_ = ticks;
             page_cache_->begin_flush_pending_txns(true, ticks_t::zero());
         }

@@ -157,7 +157,7 @@ void let_stuff_happen() {
 #ifdef VALGRIND
     nap(2000);
 #else
-    nap(milli_t{100});
+    nap(chrono::milliseconds{100});
 #endif
 }
 

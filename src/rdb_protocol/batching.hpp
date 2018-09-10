@@ -58,9 +58,9 @@ public:
         els_left(std::move(other.els_left)),
         size_left(std::move(other.size_left)),
         end_time(std::move(other.end_time)) { }
-    kiloticks_t kiloticks_left() {
+    kiloticks_t time_left() {
         auto cur_time = clock_monotonic();
-        return end_time > cur_time ? time_cast<milli_t>(end_time - cur_time) : kiloticks_t::zero();
+        return end_time > cur_time ? time_cast<kiloticks_t>(end_time - cur_time) : kiloticks_t::zero();
     }
     batch_type_t get_batch_type() { return batch_type; }
 private:
@@ -84,7 +84,7 @@ public:
     batch_type_t get_batch_type() const { return batch_type; }
     batchspec_t with_new_batch_type(batch_type_t new_batch_type) const;
     batchspec_t with_min_els(int64_t new_min_els) const;
-    batchspec_t with_max_dur(micro_t new_max_dur) const;
+    batchspec_t with_max_dur(chrono::microseconds new_max_dur) const;
     batchspec_t with_at_most(uint64_t max_els) const;
 
     // These are used to allow batchspecs to override the default ordering on a
@@ -105,7 +105,7 @@ private:
     batchspec_t() { } // USE ONLY FOR SERIALIZATION
     batchspec_t(batch_type_t batch_type, int64_t min_els, int64_t max_els,
                 int64_t max_size, int64_t first_scaledown,
-                micro_t max_dur, monotonic_t start_time);
+                chrono::microseconds max_dur, monotonic_t start_time);
 
     template<cluster_version_t W>
     friend void serialize(write_message_t *wm, const batchspec_t &batchspec);
@@ -114,7 +114,7 @@ private:
 
     batch_type_t batch_type;
     int64_t min_els, max_els, max_size, first_scaledown_factor;
-    micro_t max_dur;
+    chrono::microseconds max_dur;
     monotonic_t start_time;
     optional<sorting_t> lazy_sorting_override;
 };

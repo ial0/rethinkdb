@@ -75,7 +75,7 @@ TEST(DiskBackedQueue, BigVals) {
 }
 
 static void randomly_delay(int, signal_t *) {
-    nap(milli_t{randint(100)});
+    nap(chrono::milliseconds{randint(100)});
 }
 
 void run_concurrent_test() {
@@ -94,9 +94,9 @@ void run_concurrent_test() {
     coro_pool_t<int> coro_pool(10, &queue, &callback);
     for (int i = 0; i < 1000; i++) {
         queue.push(i);
-        nap(milli_t{randint(10)});
+        nap(chrono::milliseconds{randint(10)});
     }
-    nap(seconds_t{1});
+    nap(chrono::seconds{1});
 }
 
 TEST(DiskBackedQueue, Concurrent) {

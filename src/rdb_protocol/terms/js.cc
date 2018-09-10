@@ -22,13 +22,13 @@ private:
                                           eval_flags_t) const {
         // Optarg seems designed to take a default value as the second argument
         // but nowhere else is this actually used.
-        milli_t timeout_ms = seconds_t{5};
+        chrono::milliseconds timeout_ms = chrono::seconds{5};
         scoped_ptr_t<val_t> timeout_opt = args->optarg(env, "timeout");
         if (timeout_opt) {
-            if (timeout_opt->as_num() > static_cast<double>(milli_t::max().count()) / 1000) {
-                timeout_ms = milli_t::max();
+            if (timeout_opt->as_num() > static_cast<double>(chrono::milliseconds::max().count()) / 1000) {
+                timeout_ms = chrono::milliseconds::max();
             } else {
-                timeout_ms = time_cast<milli_t>(datum_seconds_t{timeout_opt->as_num()});
+                timeout_ms = time_cast<chrono::milliseconds>(datum_seconds_t{timeout_opt->as_num()});
             }
         }
 

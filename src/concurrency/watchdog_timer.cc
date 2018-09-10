@@ -22,7 +22,7 @@ watchdog_timer_t::blocker_t::~blocker_t() {
 }
 
 watchdog_timer_t::watchdog_timer_t(
-        milli_t _min, milli_t _max, const std::function<void()> &_callback,
+        chrono::milliseconds _min, chrono::milliseconds _max, const std::function<void()> &_callback,
         state_t initial_state) :
     min_timeout_ms(_min), max_timeout_ms(_max), callback(_callback),
     num_blockers(0), state(initial_state)
@@ -65,7 +65,7 @@ void watchdog_timer_t::run(auto_drainer_t::lock_t keepalive) {
                 `next_threshold` to only `max_timeout_ms` in the future. */
                 next_threshold = now + max_timeout_ms;
             }
-            nap(time_cast<milli_t>(next_threshold - now), keepalive.get_drain_signal());
+            nap(time_cast<chrono::milliseconds>(next_threshold - now), keepalive.get_drain_signal());
         }
     } catch (const interrupted_exc_t &) {
         /* `watchdog_timer_t` is being destroyed */
@@ -73,7 +73,7 @@ void watchdog_timer_t::run(auto_drainer_t::lock_t keepalive) {
 }
 
 void watchdog_timer_t::set_next_threshold() {
-    auto timeout_ms = min_timeout_ms + milli_t{randint((max_timeout_ms - min_timeout_ms + milli_t{1}).count())};
+    auto timeout_ms = min_timeout_ms + chrono::milliseconds{randint((max_timeout_ms - min_timeout_ms + chrono::milliseconds{1}).count())};
     next_threshold = ticks_t{get_ticks() + timeout_ms};
 }
 

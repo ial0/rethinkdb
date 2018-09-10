@@ -112,8 +112,8 @@ std::string format_log_message(const log_message_t &m, bool for_console) {
     if (!for_console) {
         prepend = strprintf("%s %ld.%06lds %s: ",
                             format_time(m.timestamp, local_or_utc_time_t::local).c_str(),
-                            time_cast<seconds_t>(m.uptime).count(),
-                            time_cast<micro_t>(m.uptime % seconds_t{1}).count(),
+                            time_cast<chrono::seconds>(m.uptime).count(),
+                            time_cast<chrono::microseconds>(m.uptime % chrono::seconds{1}).count(),
                             format_log_level(m.level).c_str());
     } else {
         if (m.level != log_level_info && m.level != log_level_notice) {
@@ -205,7 +205,7 @@ log_message_t parse_log_message(const std::string &s) THROWS_ONLY(log_read_exc_t
         if (!errmsg.empty())
             throw log_read_exc_t(errmsg);
     }
-    micro_t uptime{0};
+    chrono::microseconds uptime{0};
 
     {
         std::string tv_sec_str(start_uptime_ipart, end_uptime_ipart - start_uptime_ipart);
@@ -214,7 +214,7 @@ log_message_t parse_log_message(const std::string &s) THROWS_ONLY(log_read_exc_t
             throw log_read_exc_t("cannot parse log message (9)");
         }
 
-        uptime += seconds_t{tv_sec};
+        uptime += chrono::seconds{tv_sec};
 
         std::string tv_nsec_str(start_uptime_fpart, end_uptime_fpart - start_uptime_fpart);
         uint64_t tv_nsec;
@@ -223,7 +223,7 @@ log_message_t parse_log_message(const std::string &s) THROWS_ONLY(log_read_exc_t
         }
 
         // TODO: Seriously?  We assume three decimal places?
-        uptime += micro_t{tv_nsec};
+        uptime += chrono::microseconds{tv_nsec};
     }
 
     log_level_t level = parse_log_level(std::string(start_level, end_level - start_level));
@@ -422,7 +422,7 @@ log_message_t fallback_log_writer_t::assemble_log_message(
         being written; but the `log*()` functions are supposed to work even outside of
         the thread pool, including in the blocker pool. */
         spinlock_acq_t lock_acq(&last_msg_timestamp_lock);
-        timespec_t last_plus = last_msg_timestamp + nano_t{1};
+        timespec_t last_plus = last_msg_timestamp + chrono::nanoseconds{1};
         if (last_plus > timestamp) {
             timestamp = last_plus;
         }
@@ -431,7 +431,7 @@ log_message_t fallback_log_writer_t::assemble_log_message(
 
     auto uptime = clock_monotonic() -  uptime_reference;
 
-    return log_message_t(timestamp, time_cast<milli_t>(uptime), level, m);
+    return log_message_t(timestamp, time_cast<chrono::milliseconds>(uptime), level, m);
 }
 
 // WINDOWS TODO: this function could benefit from some refactoring

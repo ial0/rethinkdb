@@ -25,7 +25,7 @@ public:
     ~timer_handler_t();
 
     // If interval_ms is zero that means a non-repeating callback.
-    timer_token_t *add_timer_internal(monotonic_t next_time, milli_t interval,
+    timer_token_t *add_timer_internal(monotonic_t next_time, chrono::milliseconds interval,
                                       timer_callback_t *callback);
     void cancel_timer(timer_token_t *timer);
 
@@ -53,10 +53,10 @@ private:
 
 // Adds a repeating timer where the first ring starts at next_time (or immediately,
 // if that time was in the past).
-timer_token_t *add_timer2(monotonic_t next_time, milli_t ms,
+timer_token_t *add_timer2(monotonic_t next_time, chrono::milliseconds ms,
                           timer_callback_t *callback);
-timer_token_t *add_timer(milli_t ms, timer_callback_t *callback);
-timer_token_t *fire_timer_once(milli_t ms, timer_callback_t *callback);
+timer_token_t *add_timer(chrono::milliseconds ms, timer_callback_t *callback);
+timer_token_t *fire_timer_once(chrono::milliseconds ms, timer_callback_t *callback);
 void cancel_timer(timer_token_t *timer);
 
 

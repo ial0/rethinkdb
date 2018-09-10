@@ -23,7 +23,7 @@ void dispatch_http(ql::env_t *env,
                    const ql::bt_rcheckable_t *parent);
 };
 
-static const milli_t day_in_ms = std::chrono::hours{24};
+static const chrono::milliseconds day_in_ms = std::chrono::hours{24};
 
 version_checker_t::version_checker_t(
         rdb_context_t *_rdb_ctx,

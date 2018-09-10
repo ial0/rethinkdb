@@ -44,6 +44,8 @@
 #include "rpc/semilattice/view.hpp"
 #include "time.hpp"
 
+constexpr chrono::milliseconds http_conn_cache_t::TIMER_RESOLUTION_MS;
+
 http_conn_cache_t::http_conn_t::http_conn_t(rdb_context_t *rdb_ctx,
                                             ip_and_port_t client_addr_port) :
     last_accessed(time(nullptr)),

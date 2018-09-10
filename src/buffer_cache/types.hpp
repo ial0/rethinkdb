@@ -20,11 +20,11 @@ ARCHIVE_PRIM_MAKE_RANGED_SERIALIZABLE(write_durability_t, int8_t,
 // Converting this value from millis to nanos is less than half of 2^63.
 //#define NEVER_FLUSH_INTERVAL (0x100000000ll * 1000ll)
 
-inline constexpr seconds_t DEFAULT_FLUSH_INTERVAL{1};
-inline constexpr milli_t NEVER_FLUSH_INTERVAL = time_cast<milli_t>(nano_t::max());
+inline constexpr chrono::seconds DEFAULT_FLUSH_INTERVAL{1};
+inline constexpr chrono::milliseconds NEVER_FLUSH_INTERVAL = time_cast<chrono::milliseconds>(chrono::nanoseconds::max());
 
 struct flush_interval_t {
-    milli_t millis;
+    chrono::milliseconds millis;
 };
 
 typedef uint32_t block_magic_comparison_t;

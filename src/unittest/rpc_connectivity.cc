@@ -107,8 +107,8 @@ TPTEST_MULTITHREAD(RPCConnectivityTest, StartStop, 3) {
     test_cluster_run_t cr1(&c1);
     test_cluster_run_t cr2(&c2);
     test_cluster_run_t cr3(&c3);
-    cr2.join(get_cluster_local_address(&c1), seconds_t::zero());
-    cr3.join(get_cluster_local_address(&c1), seconds_t::zero());
+    cr2.join(get_cluster_local_address(&c1), chrono::seconds::zero());
+    cr3.join(get_cluster_local_address(&c1), chrono::seconds::zero());
     let_stuff_happen();
 }
 
@@ -121,8 +121,8 @@ TPTEST_MULTITHREAD(RPCConnectivityTest, Message, 3) {
     test_cluster_run_t cr1(&c1);
     test_cluster_run_t cr2(&c2);
     test_cluster_run_t cr3(&c3);
-    cr2.join(get_cluster_local_address(&c1), seconds_t::zero());
-    cr3.join(get_cluster_local_address(&c1), seconds_t::zero());
+    cr2.join(get_cluster_local_address(&c1), chrono::seconds::zero());
+    cr3.join(get_cluster_local_address(&c1), chrono::seconds::zero());
 
     let_stuff_happen();
 
@@ -166,7 +166,7 @@ TPTEST_MULTITHREAD(RPCConnectivityTest, UnreachablePeer, 3) {
     crashed, either. */
     a2.expect_undelivered(888);
 
-    cr1.join(get_cluster_local_address(&c2), seconds_t::zero());
+    cr1.join(get_cluster_local_address(&c2), chrono::seconds::zero());
 
     let_stuff_happen();
 
@@ -190,7 +190,7 @@ TPTEST_MULTITHREAD(RPCConnectivityTest, LostPeer, 3) {
 
     {
         test_cluster_run_t cr2(&c2);
-        cr2.join(get_cluster_local_address(&c1), seconds_t::zero());
+        cr2.join(get_cluster_local_address(&c1), chrono::seconds::zero());
 
         let_stuff_happen();
 
@@ -224,7 +224,7 @@ TPTEST_MULTITHREAD(RPCConnectivityTest, Ordering, 3) {
     test_cluster_run_t cr1(&c1);
     test_cluster_run_t cr2(&c2);
 
-    cr1.join(get_cluster_local_address(&c2), seconds_t::zero());
+    cr1.join(get_cluster_local_address(&c2), chrono::seconds::zero());
 
     let_stuff_happen();
 
@@ -257,7 +257,7 @@ TPTEST_MULTITHREAD(RPCConnectivityTest, GetConnections, 3) {
     {
         connectivity_cluster_t c2;
         test_cluster_run_t cr2(&c2);
-        cr2.join(get_cluster_local_address(&c1), seconds_t::zero());
+        cr2.join(get_cluster_local_address(&c1), chrono::seconds::zero());
 
         let_stuff_happen();
 
@@ -294,7 +294,7 @@ TPTEST_MULTITHREAD(RPCConnectivityTest, StopMidJoin, 3) {
         runs[i].create(nodes[i].get());
     }
     for (int i = 1; i < num_members; i++) {
-        runs[i]->join(get_cluster_local_address(nodes[0].get()), seconds_t::zero());
+        runs[i]->join(get_cluster_local_address(nodes[0].get()), chrono::seconds::zero());
     }
 
     coro_t::yield();
@@ -326,10 +326,10 @@ TPTEST_MULTITHREAD(RPCConnectivityTest, BlobJoin, 3) {
     }
 
     for (size_t i = 1; i < blob_size; i++) {
-        runs[i]->join(get_cluster_local_address(nodes[0].get()), seconds_t::zero());
+        runs[i]->join(get_cluster_local_address(nodes[0].get()), chrono::seconds::zero());
     }
     for (size_t i = blob_size+1; i < blob_size*2; i++) {
-        runs[i]->join(get_cluster_local_address(nodes[blob_size].get()), seconds_t::zero());
+        runs[i]->join(get_cluster_local_address(nodes[blob_size].get()), chrono::seconds::zero());
     }
 
     // Allow some time for the two blobs to join with themselves
@@ -347,7 +347,7 @@ TPTEST_MULTITHREAD(RPCConnectivityTest, BlobJoin, 3) {
     }
 
     // Link the two blobs
-    runs[1]->join(get_cluster_local_address(nodes[blob_size+1].get()), seconds_t::zero());
+    runs[1]->join(get_cluster_local_address(nodes[blob_size+1].get()), chrono::seconds::zero());
 
     pass = false;
     while (!pass) {
@@ -371,7 +371,7 @@ TPTEST(RPCConnectivityTest, Multiplexer) {
     test_cluster_run_t c1r(&c1);
     test_cluster_run_t c2r(&c2);
 
-    c1r.join(get_cluster_local_address(&c2), seconds_t::zero());
+    c1r.join(get_cluster_local_address(&c2), chrono::seconds::zero());
     let_stuff_happen();
 
     c1aA.send(10065, c2.get_me());
@@ -441,7 +441,7 @@ TPTEST_MULTITHREAD(RPCConnectivityTest, BinaryData, 3) {
     binary_test_application_t a1(&c1), a2(&c2);
     test_cluster_run_t cr1(&c1);
     test_cluster_run_t cr2(&c2);
-    cr1.join(get_cluster_local_address(&c2), seconds_t::zero());
+    cr1.join(get_cluster_local_address(&c2), chrono::seconds::zero());
 
     let_stuff_happen();
 
@@ -502,7 +502,7 @@ private:
 class on_timeout_t {
 public:
     template <class callable_t>
-    on_timeout_t(milli_t ms, callable_t handler) {
+    on_timeout_t(chrono::milliseconds ms, callable_t handler) {
         handler_ = handler;
         timer.start(ms);
         waiter.start([this](signal_t *interruptor) {
@@ -528,7 +528,7 @@ private:
 void check_tcp_closed(tcp_conn_stream_t *stream) {
 
     // Allow 6 seconds before timing out
-    on_timeout_t timeout(seconds_t{6}, [stream](){
+    on_timeout_t timeout(chrono::seconds{6}, [stream](){
         stream->shutdown_read();
         stream->shutdown_write();
     });
@@ -750,8 +750,8 @@ TPTEST(RPCConnectivityTest, CanonicalAddress) {
     peer_address_t c3_peer_address(c3_addresses);
 
     // Join the cluster together
-    cr2.join(get_cluster_local_address(&c1), seconds_t::zero());
-    cr3.join(get_cluster_local_address(&c1), seconds_t::zero());
+    cr2.join(get_cluster_local_address(&c1), chrono::seconds::zero());
+    cr3.join(get_cluster_local_address(&c1), chrono::seconds::zero());
 
     let_stuff_happen();
 

@@ -1665,7 +1665,7 @@ std::vector<counted_t<block_token_t>> page_cache_t::do_write_blocks(
                 // update the priority of writes in-flight.  I don't know if anything is
                 // stopping that, it would take some engineering time.
 
-                nap(time_cast<milli_t>(naptime));
+                nap(time_cast<chrono::milliseconds>(naptime));
             } else {
                 // We're not flushing fast enough to keep up with our smear interval.
                 // That's okay.

@@ -17,7 +17,7 @@ namespace unittest {
 
 TEST(Http, FormatTime) {
 
-    std::string formatted_time = http_format_date(realtime_t{seconds_t{1356998463}});
+    std::string formatted_time = http_format_date(realtime_t{chrono::seconds{1356998463}});
 
     EXPECT_EQ("Tue, 01 Jan 2013 00:01:03 GMT", formatted_time);
 
@@ -154,7 +154,7 @@ private:
 
         // Verify that we do not get a response - allow 0.5s
         signal_timer_t timeout;
-        timeout.start(milli_t{500});
+        timeout.start(chrono::milliseconds{500});
 
         try {
             char dummy_buffer[1];

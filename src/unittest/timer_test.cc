@@ -19,10 +19,10 @@ const int wait_array[simultaneous][waits] =
 
 #ifdef _WIN32
 // Assuming a 15ms sleep resolution
-const milli_t max_error_ms{16};
+const chrono::milliseconds max_error_ms{16};
 const int max_average_error_ms = 11;
 #else
-const milli_t max_error_ms{5};
+const chrono::milliseconds max_error_ms{5};
 const int  max_average_error_ms = 2;
 #endif
 
@@ -34,7 +34,7 @@ auto nsabs(ticks_t t)
 void walk_wait_times(int i, uint64_t *mse) {
     uint64_t se = 0;
     for (int j = 0; j < waits; ++j) {
-        auto expected_ms = milli_t{wait_array[i][j]};
+        auto expected_ms = chrono::milliseconds{wait_array[i][j]};
         ticks_t t1 = get_ticks();
         nap(expected_ms);
         ticks_t t2 = get_ticks();
@@ -66,13 +66,13 @@ TPTEST(TimerTest, TestApproximateWaitTimes) {
 TPTEST(TimerTest, TestRepeatingTimer) {
     auto first_ticks = get_ticks();
     int count = 0;
-    repeating_timer_t timer(milli_t{30}, [&]() {
+    repeating_timer_t timer(chrono::milliseconds{30}, [&]() {
         ++count;
         auto ticks = get_ticks();
         auto diff = ticks - first_ticks;
-        EXPECT_LT(nsabs(diff - milli_t{30} * count), max_error_ms);
+        EXPECT_LT(nsabs(diff - chrono::milliseconds{30} * count), max_error_ms);
     });
-    nap(milli_t{100});
+    nap(chrono::milliseconds{100});
 }
 
 TPTEST(TimerTest, TestChangeInterval) {
@@ -82,20 +82,20 @@ TPTEST(TimerTest, TestChangeInterval) {
     const int64_t naps[] = {0,  0,  0,  25, 0};
     const int64_t ms[] = { 10, 20, 30, 10, 50};
     scoped_ptr_t<repeating_timer_t> timer;
-    timer = make_scoped<repeating_timer_t>(milli_t{10}, [&]() {
+    timer = make_scoped<repeating_timer_t>(chrono::milliseconds{10}, [&]() {
         coro_t::spawn_now_dangerously([&]() {
             ASSERT_LT(count, 5);
             ticks_t ticks = get_ticks();
             auto diff = ticks - first_ticks;
-            EXPECT_LT(nsabs(diff - milli_t{expected[count]}),
+            EXPECT_LT(nsabs(diff - chrono::milliseconds{expected[count]}),
                       max_error_ms);
-            nap(milli_t{naps[count]});
-            timer->change_interval(milli_t{ms[count]});
+            nap(chrono::milliseconds{naps[count]});
+            timer->change_interval(chrono::milliseconds{ms[count]});
             ++count;
         });
     });
-    timer->change_interval(milli_t{5});
-    nap(milli_t{70});
+    timer->change_interval(chrono::milliseconds{5});
+    nap(chrono::milliseconds{70});
 }
 
 

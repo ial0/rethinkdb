@@ -307,7 +307,7 @@ struct get_flush_interval_visitor_t : public boost::static_visitor<flush_interva
             return flush_interval_t{NEVER_FLUSH_INTERVAL};
         }
 
-        auto value_int = cpp14::ceil<milli_t>(value_ms);
+        auto value_int = ceil<chrono::milliseconds>(value_ms);
         return flush_interval_t{value_int};
     }
 };

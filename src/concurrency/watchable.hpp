@@ -161,7 +161,7 @@ public:
     efficient because it only retries `fun` when the value changes. */
     template<class callable_type>
     void run_until_satisfied(const callable_type &fun, signal_t *interruptor,
-            milli_t nap_before_retry_ms = milli_t::zero()) THROWS_ONLY(interrupted_exc_t);
+            chrono::milliseconds nap_before_retry_ms = chrono::milliseconds::zero()) THROWS_ONLY(interrupted_exc_t);
 
 protected:
     watchable_t() { }
@@ -179,7 +179,7 @@ void run_until_satisfied_2(
         const clone_ptr_t<watchable_t<b_type> > &b,
         const callable_type &fun,
         signal_t *interruptor,
-        milli_t nap_before_retry_ms = milli_t::zero()) THROWS_ONLY(interrupted_exc_t);
+        chrono::milliseconds nap_before_retry_ms = chrono::milliseconds::zero()) THROWS_ONLY(interrupted_exc_t);
 
 inline void call_function(const std::function<void()> &f) {
     f();

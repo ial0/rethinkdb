@@ -13,6 +13,8 @@
 #include "rdb_protocol/terms/terms.hpp"
 #include "rpc/semilattice/view.hpp"
 
+#include "time.hpp"
+
 namespace ql {
 
 class http_term_t : public op_term_t {
@@ -75,7 +77,7 @@ private:
 
     static void get_timeout_ms(scope_env_t *env,
                                args_t *args,
-                               milli_t *timeout_ms_out);
+                               chrono::milliseconds *timeout_ms_out);
 
     static void get_header(scope_env_t *env,
                            args_t *args,
@@ -108,8 +110,10 @@ private:
                                      const bt_rcheckable_t *auth);
 
     // Have a maximum timeout of 30 days
-    static constexpr milli_t MAX_TIMEOUT_MS{2592000};
+    static constexpr chrono::milliseconds MAX_TIMEOUT_MS = chrono::days{32}; //{2592000};
 };
+
+constexpr chrono::milliseconds http_term_t::MAX_TIMEOUT_MS;
 
 void check_url_params(const datum_t &params,
                       bt_rcheckable_t *val) {
@@ -455,7 +459,7 @@ void http_term_t::get_optargs(scope_env_t *env,
 // out of the HTTP request.  This must be a NUMBER, but may be fractional.
 void http_term_t::get_timeout_ms(scope_env_t *env,
                                  args_t *args,
-                                 milli_t *timeout_ms_out) {
+                                 chrono::milliseconds *timeout_ms_out) {
     scoped_ptr_t<val_t> timeout = args->optarg(env, "timeout");
     if (timeout.has()) {
         datum_seconds_t tmp{timeout->as_num()};
@@ -465,7 +469,7 @@ void http_term_t::get_timeout_ms(scope_env_t *env,
             rfail_target(timeout.get(), base_exc_t::LOGIC,
                          "`timeout` may not be negative.");
         } else {
-            *timeout_ms_out = std::clamp<milli_t>(time_cast<milli_t>(tmp), milli_t::zero(), MAX_TIMEOUT_MS);
+            *timeout_ms_out = clamp<chrono::milliseconds>(time_cast<chrono::milliseconds>(tmp), chrono::milliseconds::zero(), MAX_TIMEOUT_MS);
         }
     }
 }

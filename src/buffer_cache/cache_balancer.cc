@@ -7,9 +7,9 @@
 #include "arch/runtime/runtime.hpp"
 #include "concurrency/pmap.hpp"
 
-const milli_t alt_cache_balancer_t::rebalance_check_interval_ms = milli_t {20};
+const chrono::milliseconds alt_cache_balancer_t::rebalance_check_interval_ms = chrono::milliseconds {20};
 const uint64_t alt_cache_balancer_t::rebalance_access_count_threshold = 100;
-const milli_t alt_cache_balancer_t::rebalance_timeout_ms = milli_t {500};
+const chrono::milliseconds alt_cache_balancer_t::rebalance_timeout_ms = chrono::milliseconds {500};
 
 const double alt_cache_balancer_t::read_ahead_proportion = 0.9;
 

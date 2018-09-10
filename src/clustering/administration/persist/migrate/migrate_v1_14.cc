@@ -41,7 +41,7 @@ versioned_t<new_t> migrate_vclock_transform(
     if the user migrates two files, and one has a vector clock update that the other one
     lacks, the one with the vector clock update will end up with a larger `versioned_t`
     timestamp, so the right thing will happen. */
-    realtime_t timestamp = realtime_t::min() + seconds_t{1 + best_total};
+    realtime_t timestamp = realtime_t::min() + chrono::seconds{1 + best_total};
     return versioned_t<new_t>::make_with_manual_timestamp(
         timestamp, converter(best_value));
 }
@@ -432,7 +432,7 @@ metadata_v1_16::namespace_semilattice_metadata_t migrate_table(
             procedure to two servers' metadata, and one has a more up-to-date vector
             clock, then the one with the more up-to-date vector clock will produce a
             `versioned_t` with a later timestamp. */
-            realtime_t::min() + seconds_t{1} + seconds_t{blueprint_vclock_total + acks_vclock_total},
+            realtime_t::min() + chrono::seconds{1} + chrono::seconds{blueprint_vclock_total + acks_vclock_total},
 
             //std::numeric_limits<time_t>::min() + 1 + blueprint_vclock_total + acks_vclock_total,
             repli_info);

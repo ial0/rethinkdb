@@ -19,8 +19,8 @@ public:
         connectivity_cluster_t *connectivity_cluster,
         connectivity_cluster_t::run_t *connectivity_cluster_run,
         server_config_client_t *server_config_client,
-        const seconds_t join_delay_secs,
-        const milli_t give_up_ms);
+        const chrono::seconds join_delay_secs,
+        const chrono::milliseconds give_up_ms);
 
 private:
     void on_connect_or_disconnect(const peer_id_t &peer_id);
@@ -41,8 +41,8 @@ private:
     connected servers we get from the `connectivity_cluster_t`. */
     std::map<peer_id_t, server_id_t> server_ids;
 
-    seconds_t join_delay_secs;
-    milli_t give_up_ms;
+    chrono::seconds join_delay_secs;
+    chrono::milliseconds give_up_ms;
 
     auto_drainer_t drainer;
 

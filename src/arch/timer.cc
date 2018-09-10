@@ -13,7 +13,7 @@ class timer_token_t : public intrusive_priority_queue_node_t<timer_token_t> {
     friend class timer_handler_t;
 
 private:
-    timer_token_t() : interval(nano_t{-1}), next_time(nano_t{-1}), callback(nullptr) { }
+    timer_token_t() : interval(chrono::nanoseconds{-1}), next_time(chrono::nanoseconds{-1}), callback(nullptr) { }
 
     friend bool left_is_higher_priority(const timer_token_t *left, const timer_token_t *right);
 
@@ -35,7 +35,7 @@ bool left_is_higher_priority(const timer_token_t *left, const timer_token_t *rig
 
 timer_handler_t::timer_handler_t(linux_event_queue_t *queue)
     : timer_provider(queue),
-      expected_oneshot_time(nano_t::zero()) {
+      expected_oneshot_time(chrono::nanoseconds::zero()) {
     // Right now, we have no tokens.  So we don't ask the timer provider to do anything for us.
 }
 
@@ -55,7 +55,7 @@ void timer_handler_t::on_oneshot() {
 
         // Put the repeating timer back on the queue before the callback can be called (so that it
         // may be canceled).
-        if (token->interval != nano_t::zero()) {
+        if (token->interval != chrono::nanoseconds::zero()) {
             token->next_time = realtime + token->interval;
             token_queue.push(token.get());
         }
@@ -63,7 +63,7 @@ void timer_handler_t::on_oneshot() {
         token->callback->on_timer(realtime);
 
         // Delete nonrepeating timer tokens.
-        if (token->interval != nano_t::zero()) {
+        if (token->interval != chrono::nanoseconds::zero()) {
             token.release();
         }
     }
@@ -75,10 +75,10 @@ void timer_handler_t::on_oneshot() {
 }
 
 timer_token_t *timer_handler_t::add_timer_internal(
-        const monotonic_t next_time, const milli_t interval,
+        const monotonic_t next_time, const chrono::milliseconds interval,
         timer_callback_t *callback) {
 	rassert(next_time >= monotonic_t{});
-    rassert(interval >= milli_t::zero());
+    rassert(interval >= chrono::milliseconds::zero());
 
     std::unique_ptr<timer_token_t> token{new timer_token_t{}};
     token->interval = interval;
@@ -106,24 +106,24 @@ void timer_handler_t::cancel_timer(timer_token_t *token) {
 
 
 
-timer_token_t *add_timer2(monotonic_t next_time, milli_t interval,
+timer_token_t *add_timer2(monotonic_t next_time, chrono::milliseconds interval,
                           timer_callback_t *callback) {
-    rassert(interval > milli_t::zero());
+    rassert(interval > chrono::milliseconds::zero());
     return linux_thread_pool_t::get_thread()->timer_handler.add_timer_internal(
         next_time, interval, callback);
 }
 
-timer_token_t *add_timer(milli_t ms, timer_callback_t *callback) {
-    rassert(ms > milli_t::zero());
+timer_token_t *add_timer(chrono::milliseconds ms, timer_callback_t *callback) {
+    rassert(ms > chrono::milliseconds::zero());
     auto next_time = clock_monotonic() + ms;
     return linux_thread_pool_t::get_thread()->timer_handler.add_timer_internal(
        next_time, ms, callback);
 }
 
-timer_token_t *fire_timer_once(milli_t ms, timer_callback_t *callback) {
+timer_token_t *fire_timer_once(chrono::milliseconds ms, timer_callback_t *callback) {
     auto next_time = clock_monotonic() + ms;
     return linux_thread_pool_t::get_thread()->timer_handler.add_timer_internal(
-        next_time, milli_t::zero(), callback);
+        next_time, chrono::milliseconds::zero(), callback);
 }
 
 void cancel_timer(timer_token_t *timer) {

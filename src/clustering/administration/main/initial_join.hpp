@@ -21,8 +21,8 @@ public:
             connectivity_cluster_t *cluster,
             connectivity_cluster_t::run_t *cluster_run,
             const peer_address_set_t &peers,
-            const seconds_t join_delay,
-            milli_t timeout = milli_t{-1});
+            const chrono::seconds join_delay,
+            chrono::milliseconds timeout = chrono::milliseconds{-1});
 
     signal_t *get_ready_signal() {
         return &done_signal;
@@ -43,7 +43,7 @@ private:
     peer_address_set_t peers_not_heard_from;
     cond_t done_signal;
     signal_timer_t grace_period_timer;
-    seconds_t join_delay_secs;
+    chrono::seconds join_delay_secs;
     auto_drainer_t drainer;
     watchable_map_t<peer_id_t, connectivity_cluster_t::connection_pair_t>
         ::all_subs_t subs;

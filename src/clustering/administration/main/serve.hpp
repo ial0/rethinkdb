@@ -117,8 +117,8 @@ public:
                  service_address_ports_t _ports,
                  optional<std::string> _config_file,
                  std::vector<std::string> &&_argv,
-                 const seconds_t _join_delay_secs,
-                 const seconds_t _node_reconnect_timeout_secs,
+                 const chrono::seconds _join_delay_secs,
+                 const chrono::seconds _node_reconnect_timeout_secs,
                  tls_configs_t _tls_configs) :
         joins(std::move(_joins)),
         reql_http_proxy(std::move(_reql_http_proxy)),
@@ -147,8 +147,8 @@ public:
     /* The original arguments, so we can display them in `server_status`. All the
     argument parsing has already been completed at this point. */
     std::vector<std::string> argv;
-    seconds_t join_delay_secs;
-    seconds_t node_reconnect_timeout_secs;
+    chrono::seconds join_delay_secs;
+    chrono::seconds node_reconnect_timeout_secs;
     tls_configs_t tls_configs;
 };
 
