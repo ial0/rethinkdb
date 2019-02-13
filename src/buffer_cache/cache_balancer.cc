@@ -28,14 +28,14 @@ alt_cache_balancer_t::alt_cache_balancer_t(
     total_cache_size_watchable(_total_cache_size_watchable),
     rebalance_timer(make_scoped<repeating_timer_t>(rebalance_check_interval_ms, this)),
     rebalance_timer_state(rebalance_timer_state_t::normal),
-    last_rebalance_time{kiloticks_t::zero()},
+    last_rebalance_time{microticks_t::zero()},
     read_ahead_ok(true),
     bytes_toward_read_ahead_limit(0),
     per_thread_data(get_num_threads()),
     rebalance_pumper([this](signal_t *interruptor) { rebalance_blocking(interruptor); }),
     cache_size_change_subscription(
         [this]() {
-            last_rebalance_time = kiloticks_t::zero();
+            last_rebalance_time = microticks_t::zero();
             wake_up_activity_happened();
             rebalance_pumper.notify();
         })
@@ -140,7 +140,7 @@ void alt_cache_balancer_t::rebalance_blocking(UNUSED signal_t *interruptor) {
     //  1. At least rebalance_timeout_ms milliseconds have passed
     //  2. At least access_count_threshold accesses have occurred
     // since the last rebalance.
-    kiloticks_t now = get_kiloticks();
+    auto now = get_ticks();
 
     if ((now < last_rebalance_time + rebalance_timeout_ms) &&
         total_access_count < rebalance_access_count_threshold) {
@@ -148,7 +148,7 @@ void alt_cache_balancer_t::rebalance_blocking(UNUSED signal_t *interruptor) {
         return;
     }
 
-    last_rebalance_time = now;
+    last_rebalance_time = time_cast<microticks_t>(now);
 
     // Calculate new cache sizes
     if (total_evicters > 0) {

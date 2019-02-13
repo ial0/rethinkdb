@@ -12,11 +12,9 @@
 
 
 using monotonic_t = std::chrono::steady_clock::time_point;
-using timespec_t = std::chrono::system_clock::time_point;
 using realtime_t = std::chrono::system_clock::time_point;
 
-// Monotonic timer.  USE THIS!
-inline  auto clock_monotonic()
+inline auto clock_monotonic()
 {
     return std::chrono::steady_clock::now();
 }
@@ -26,16 +24,17 @@ inline auto clock_realtime()
     return std::chrono::system_clock::now();
 }
 
-inline time_t clock_to_time(timespec_t t)
+inline time_t clock_to_time(realtime_t t)
 {
     return std::chrono::system_clock::to_time_t(t);
 }
 
-inline timespec_t time_to_clock(time_t t)
+inline realtime_t time_to_clock(time_t t)
 {
     return std::chrono::system_clock::from_time_t(t);
 }
 
+/*
 template <cluster_version_t W>
 void serialize(write_message_t *wm, const realtime_t &s) {
     serialize<W>(wm,  std::chrono::duration_cast<std::chrono::seconds>(s.time_since_epoch()));
@@ -64,8 +63,9 @@ MUST_USE archive_result_t deserialize(read_stream_t *s, monotonic_t *p) {
     return res;
 }
 
-using microtime_t = std::chrono::duration<uint64_t, std::micro>;
+*/
 
+using microticks_t = std::chrono::duration<int64_t, std::micro>;
 using ticks_t = std::chrono::duration<int64_t, std::nano>;
 
 namespace chrono {
@@ -117,18 +117,12 @@ MUST_USE archive_result_t deserialize(read_stream_t *s, std::chrono::duration<in
     return res;
 }
 
-using kiloticks_t = std::chrono::duration<int64_t, std::micro>;
-
-inline ticks_t remaining_nanos(timespec_t t) {
+inline ticks_t remaining_nanos(realtime_t t) {
     return t.time_since_epoch() - std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch()) ;
 }
 
 inline ticks_t get_ticks() {
     return std::chrono::steady_clock::now().time_since_epoch();
-}
-
-inline kiloticks_t get_kiloticks() {
-    return std::chrono::duration_cast<kiloticks_t>(std::chrono::steady_clock::now().time_since_epoch());
 }
 
 template <typename T, typename A>

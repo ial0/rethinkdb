@@ -202,7 +202,7 @@ void format_time(std::time_t time, printf_buffer_t *buf, local_or_utc_time_t zon
 }
 */
 
-std::string format_time(timespec_t time, local_or_utc_time_t zone) {
+std::string format_time(realtime_t time, local_or_utc_time_t zone) {
     std::stringstream time_str;
     std::time_t t = clock_to_time(time);
     if (zone == local_or_utc_time_t::utc)
