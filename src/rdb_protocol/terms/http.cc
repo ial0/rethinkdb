@@ -110,7 +110,7 @@ private:
                                      const bt_rcheckable_t *auth);
 
     // Have a maximum timeout of 30 days
-    static constexpr chrono::milliseconds MAX_TIMEOUT_MS = chrono::days{32}; //{2592000};
+    static constexpr chrono::milliseconds MAX_TIMEOUT_MS = chrono::days{30};
 };
 
 constexpr chrono::milliseconds http_term_t::MAX_TIMEOUT_MS;

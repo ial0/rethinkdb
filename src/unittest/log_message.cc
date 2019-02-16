@@ -4,6 +4,9 @@
 #include "unittest/gtest.hpp"
 #include "unittest/unittest_utils.hpp"
 
+#include <unistd.h>
+#include <time.h>
+
 namespace unittest {
 
 TEST(LogMessageTest, ParseFormat) {
@@ -11,11 +14,15 @@ TEST(LogMessageTest, ParseFormat) {
     auto timestamp = clock_realtime();
     auto uptime = clock_monotonic();
 
-    log_message_t message(timestamp, time_cast<chrono::microseconds>(uptime.time_since_epoch()), log_level_info, "test message *(&Q(!#@LJVO");
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    chrono::nanoseconds s = chrono::seconds{t.tv_sec} + chrono::nanoseconds{t.tv_nsec};
+
+    log_message_t message(timestamp, s, log_level_info, "test message *(&Q(!#@LJVO");
     std::string formatted = format_log_message(message);
     log_message_t parsed = parse_log_message(formatted);
     EXPECT_EQ(message.timestamp, parsed.timestamp);
-    EXPECT_EQ(message.uptime.count(), parsed.uptime.count());
+    EXPECT_EQ(message.uptime, parsed.uptime) << "[" << formatted << "]";
     EXPECT_EQ(message.level, parsed.level);
     EXPECT_EQ(message.message, parsed.message);
 }

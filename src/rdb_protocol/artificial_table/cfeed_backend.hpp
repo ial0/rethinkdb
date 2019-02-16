@@ -38,7 +38,7 @@ protected:
                 auth::user_context_t const &user_context)
             : ql::changefeed::artificial_t(table_id, name_resolver),
               m_user_context(user_context),
-              last_subscriber_time(get_kiloticks()) {
+              last_subscriber_time(clock_monotonic()) {
         }
         virtual ~machinery_t() { }
 

@@ -9,6 +9,22 @@
 #include "rdb_protocol/protocol.hpp"
 #include "stl_utils.hpp"
 
+RDB_DECLARE_SERIALIZABLE(realtime_t);
+
+template <>
+void serialize<cluster_version_t::CLUSTER>(write_message_t *wm, const realtime_t &s) {
+    serialize<cluster_version_t::CLUSTER>(wm, std::chrono::duration_cast<std::chrono::microseconds>(s.time_since_epoch()));
+}
+
+template <>
+MUST_USE archive_result_t deserialize<cluster_version_t::CLUSTER>(read_stream_t *s, realtime_t *p) {
+    std::chrono::microseconds d;
+    archive_result_t res = deserialize<cluster_version_t::CLUSTER>(s, &d);
+    if (bad(res)) { return res; }
+    *p = realtime_t{d};
+    return res;
+}
+
 RDB_IMPL_SERIALIZABLE_1_SINCE_v2_1(cluster_semilattice_metadata_t, databases);
 RDB_IMPL_SEMILATTICE_JOINABLE_1(cluster_semilattice_metadata_t, databases);
 RDB_IMPL_EQUALITY_COMPARABLE_1(cluster_semilattice_metadata_t, databases);

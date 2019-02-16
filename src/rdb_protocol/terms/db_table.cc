@@ -510,8 +510,7 @@ private:
         signal_timer_t timeout_timer;
         wait_any_t combined_interruptor(env->env->interruptor);
         if (scoped_ptr_t<val_t> timeout = args->optarg(env, "timeout")) {
-        	chrono::seconds to{timeout->as_int<int64_t>()};
-            timeout_timer.start(to);
+            timeout_timer.start(chrono::seconds{timeout->as_int<int64_t>()});
             combined_interruptor.add(&timeout_timer);
         }
 

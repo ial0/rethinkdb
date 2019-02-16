@@ -20,14 +20,18 @@
 
 ARCHIVE_PRIM_MAKE_RANGED_SERIALIZABLE(log_level_t, int, log_level_debug, log_level_error);
 RDB_DECLARE_SERIALIZABLE(timespec_t);
+RDB_DECLARE_SERIALIZABLE(uptime_t);
 
 class log_message_t {
 public:
-    log_message_t() { }
-    log_message_t(timespec_t t, chrono::microseconds u, log_level_t l, std::string m) :
+    log_message_t()
+        : timestamp{realtime_t::min()},
+          uptime{chrono::nanoseconds::zero()}
+    { }
+    log_message_t(realtime_t t, chrono::nanoseconds u, log_level_t l, std::string m) :
         timestamp(t), uptime(u), level(l), message(m) { }
     timespec_t timestamp;
-    chrono::microseconds uptime;
+    uptime_t uptime;
     log_level_t level;
     std::string message;
 };

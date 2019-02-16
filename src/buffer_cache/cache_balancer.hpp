@@ -177,7 +177,7 @@ private:
     };
     rebalance_timer_state_t rebalance_timer_state;
 
-    microticks_t last_rebalance_time;
+    kiloticks_t last_rebalance_time;
     bool read_ahead_ok;
     uint64_t bytes_toward_read_ahead_limit;
 

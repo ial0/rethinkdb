@@ -9,12 +9,12 @@ static const int entries_per_server = 1000;
 
 ql::datum_t convert_timespec_to_datum(const timespec_t &t) {
     return ql::pseudo::make_time(
-        to_datum_time<datum_seconds_t>(t.time_since_epoch()).count(), "+00:00");
+        to_datum_time<datum_seconds_t>(t.time().time_since_epoch()).count(), "+00:00");
 }
 
-ql::datum_t convert_duration_to_datum(const chrono::microseconds &d) {
+ql::datum_t convert_uptime_to_datum(const uptime_t &d) {
     //t.tv_sec + static_cast<double>(t.tv_nsec) / BILLION
-    return ql::datum_t(to_datum_time<datum_seconds_t>(d).count());
+    return ql::datum_t(to_datum_time<datum_seconds_t>(d.time()).count());
 }
 
 ql::datum_t convert_log_key_to_datum(const timespec_t &ts, const server_id_t &si) {
@@ -40,7 +40,7 @@ bool convert_log_key_from_datum(const ql::datum_t &d,
         return false;
     }
     std::string err;
-    auto t = parse_time(d.get(0).as_str().to_std(), local_or_utc_time_t::utc, &err);
+    *ts_out = timespec_t(parse_time(d.get(0).as_str().to_std(), local_or_utc_time_t::utc, &err));
     if (!err.empty()) {
         *error_out = admin_err_t{"In timestamp: " + err, query_state_t::FAILED};
         return false;        
@@ -59,7 +59,7 @@ ql::datum_t convert_log_message_to_datum(
     builder.overwrite("id", convert_log_key_to_datum(msg.timestamp, server_id));
     builder.overwrite("server", server_datum);
     builder.overwrite("timestamp", convert_timespec_to_datum(msg.timestamp));
-    builder.overwrite("uptime", convert_duration_to_datum(msg.uptime));
+    builder.overwrite("uptime", convert_uptime_to_datum(msg.uptime));
     builder.overwrite("level", ql::datum_t(datum_string_t(format_log_level(msg.level))));
     builder.overwrite("message", ql::datum_t(datum_string_t(msg.message)));
     return std::move(builder).to_datum();
@@ -111,7 +111,7 @@ bool logs_artificial_table_backend_t::read_row(
         signal_t *interruptor,
         ql::datum_t *row_out,
         admin_err_t *error_out) {
-    timespec_t timestamp;
+    timespec_t timestamp{realtime_t::min()};
     server_id_t server_id;
     admin_err_t dummy_error;
     if (!convert_log_key_from_datum(primary_key, &timestamp, &server_id, &dummy_error)) {
@@ -284,15 +284,14 @@ void logs_artificial_table_backend_t::cfeed_machinery_t::run(
 
             /* Fetch the last message in the server's log file */
             std::vector<log_message_t> messages;
+            messages.reserve(1);
             try {
-                timespec_t min_time = timespec_t::min();
-                timespec_t max_time = timespec_t::max();
                 messages = fetch_log_file(
                     parent->mailbox_manager,
                     bcard,
                     1,   /* only fetch latest entry */
-                    min_time,
-                    max_time,
+                    realtime_t::min(),
+                    realtime_t::max(),
                     keepalive.get_drain_signal());
             } catch (const log_transfer_exc_t &) {
                 /* The server disconnected. However, to avoid race conditions, we can't
@@ -338,8 +337,6 @@ void logs_artificial_table_backend_t::cfeed_machinery_t::run(
             std::vector<log_message_t> messages;
             try {
                 /* We choose `min_time` so as to exclude the last message from before */
-                timespec_t min_time = *last_timestamp.get_value() + chrono::nanoseconds{1};
-                timespec_t max_time = timespec_t::max();
                 messages = fetch_log_file(
                     parent->mailbox_manager,
                     bcard,
@@ -348,8 +345,8 @@ void logs_artificial_table_backend_t::cfeed_machinery_t::run(
                     But this table already "cheats" regarding the relationship between
                     the contents of the table and the changefeed, so it's no big deal. */
                     entries_per_server,
-                    min_time,
-                    max_time,
+                    last_timestamp.get_value()->time() + chrono::nanoseconds{1},
+                    realtime_t::max(),
                     keepalive.get_drain_signal());
             } catch (const log_transfer_exc_t &) {
                 /* Just like in the earlier loop, we ignore the error and rely on
@@ -376,7 +373,7 @@ void logs_artificial_table_backend_t::cfeed_machinery_t::run(
                     /* It's possible that `get_initial_values()` has changed
                     `last_timestamp` since we started fetching the log file. We need to
                     filter out any entries that started after `last_timestamp`. */
-                    if (it->timestamp <= *last_timestamp.get_value()) {
+                    if (it->timestamp <= last_timestamp.get_value()->time()) {
                         continue;
                     }
                     *last_timestamp.get_value() = it->timestamp;
@@ -477,14 +474,12 @@ bool logs_artificial_table_backend_t::read_all_rows_raw(
 
             std::vector<log_message_t> messages;
             try {
-                timespec_t min_time = timespec_t::min();
-                timespec_t max_time = timespec_t::max();
                 messages = fetch_log_file(
                     mailbox_manager,
                     pair.second,
                     entries_per_server,
-                    min_time,
-                    max_time,
+                    realtime_t::min(),
+                    realtime_t::max(),
                     interruptor);
             } catch (const interrupted_exc_t &) {
                 /* We'll deal with it outside the `pmap()` */

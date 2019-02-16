@@ -49,7 +49,7 @@ public:
         // Generate a timestamp that's minus our current time, so that the oldest
         // initial password wins. Unless the initial password is empty, which
         // should always lose.
-        realtime_t version_ts = realtime_t::min();
+        auto version_ts = realtime_t::min();
         if (!initial_password.empty()) {
             realtime_t current_time = clock_realtime();
             if (current_time > realtime_t{}) {
@@ -68,8 +68,8 @@ public:
         return std::make_pair(
             auth::username_t("admin"),
             versioned_t<optional<auth::user_t>>::make_with_manual_timestamp(
-                version_ts,
-                make_optional(auth::user_t(std::move(pw)))));
+                std::chrono::system_clock::to_time_t(version_ts),
+                rdb::make_optional(auth::user_t(std::move(pw)))));
     }
 
     std::map<auth::username_t, versioned_t<optional<auth::user_t>>> m_users;

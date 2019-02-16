@@ -70,7 +70,7 @@ bool parse_time(
     const std::string &str, local_or_utc_time_t zone,
     struct timespec *out, std::string *errmsg_out);
 
-timespec_t parse_time(const std::string &str, local_or_utc_time_t zone, std::string *errmsg_out);
+realtime_t parse_time(const std::string &str, local_or_utc_time_t zone, std::string *errmsg_out);
 
 /* Printing binary data to stderr in a nice format */
 void print_hd(const void *buf, size_t offset, size_t length);

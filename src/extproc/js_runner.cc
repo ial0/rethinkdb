@@ -11,7 +11,7 @@
 
 const size_t js_runner_t::CACHE_SIZE = 100;
 
-auto query_timeout_string(const char * str, const chrono::milliseconds timeout)
+std::string query_timeout_string(const char * str, const chrono::milliseconds timeout)
 {
     return strprintf(
         "JavaScript query `%s` timed out after %" PRIu64 ".%03" PRIu64 " seconds.",

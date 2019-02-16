@@ -685,9 +685,10 @@ std::string http_format_date(const realtime_t date) {
     guarantee_err(res1 == &t, "gmtime_r() failed.");
 #endif
 
-    std::stringstream s;
-    s << std::put_time(&t, "%a, %d %b %Y %H:%M:%S GMT");
-    return s.str();
+    char time_str[64];
+    std::strftime(time_str, 1024, "%a, %d %b %Y %H:%M:%S GMT", &t);
+    //"Sun, 02 Jan 2019 10:20:05 GMT"
+    return std::string{time_str};
 
     /*
     static const char *weekday[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };

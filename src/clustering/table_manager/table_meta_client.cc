@@ -805,7 +805,7 @@ void table_meta_client_t::retry(
             }
         }
         nap(wait_ms, interruptor);
-        wait_ms *= 1.5;
+        wait_ms = time_cast<chrono::milliseconds>(wait_ms * 1.5);
     }
 }
 

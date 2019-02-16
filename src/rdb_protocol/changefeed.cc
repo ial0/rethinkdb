@@ -1399,7 +1399,7 @@ protected:
     bool mid_batch;
 private:
     friend class splice_stream_t;
-    const double min_interval;
+    const datum_seconds_t min_interval;
 
     virtual bool has_el() = 0;
     virtual datum_t pop_el() = 0;
@@ -2548,7 +2548,7 @@ public:
     void init(const std::vector<std::pair<std::string, std::pair<datum_t, datum_t> > >
               &start_data) {
 #ifndef NDEBUG
-        nap(randint(250)); // Nap up to 250ms to test queueing.
+        nap(chrono::milliseconds(randint(250))); // Nap up to 250ms to test queueing.
 #endif
         got_init += 1;
         for (const auto &pair : start_data) {
@@ -3094,7 +3094,7 @@ private:
                     // available.  This shouldn't matter too much because this
                     // case should be rare in practice, and napping more than
                     // once should be extremely rare.
-                    nap(50, env->interruptor);
+                    nap(chrono::milliseconds{50}, env->interruptor);
                 }
             }
         }
@@ -3236,7 +3236,8 @@ subscription_t::subscription_t(
       include_states(_include_states),
       include_types(_include_types),
       mid_batch(false),
-      min_interval(_squash.get_type() == datum_t::R_NUM ? _squash.as_num() : 0.0),
+      min_interval(_squash.get_type() == datum_t::R_NUM ? datum_seconds_t{_squash.as_num()} :
+        datum_seconds_t::zero()),
       rdb_context(_rdb_context),
       user_context(_user_context),
       cond(NULL),
@@ -3262,17 +3263,17 @@ subscription_t::get_els(batcher_t *batcher,
 
     // We wait for data if we don't have any or if we're squashing and not
     // in the middle of a logical batch.
-    if (!exc && skipped == 0 && (!has_el() || (!mid_batch && min_interval > 0.0))) {
+    if (!exc && skipped == 0 && (!has_el() || (!mid_batch && min_interval > datum_seconds_t::zero()))) {
         scoped_ptr_t<signal_timer_t> batch_timer;
         if (batcher->get_batch_type() == batch_type_t::NORMAL_FIRST) {
-            batch_timer = make_scoped<signal_timer_t>(0);
+            batch_timer = make_scoped<signal_timer_t>(chrono::milliseconds::zero());
         } else if (return_empty_normal_batches == return_empty_normal_batches_t::YES) {
-            batch_timer = make_scoped<signal_timer_t>(batcher->kiloticks_left().micros / 1000);
+            batch_timer = make_scoped<signal_timer_t>(time_cast<chrono::milliseconds>(batcher->ticks_left()));
         }
         // If we have to wait, wait.
-        if (min_interval > 0.0
+        if (min_interval > datum_seconds_t::zero()
             && batcher->get_batch_type() != batch_type_t::NORMAL_FIRST) {
-            signal_timer_t squash_timer(min_interval * 1000);
+            signal_timer_t squash_timer(time_cast<chrono::milliseconds>(min_interval));
             cond_t wait_for_nearly_full_queue;
             queue_nearly_full_cond = &wait_for_nearly_full_queue;
             try {

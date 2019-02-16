@@ -118,5 +118,5 @@ chrono::microseconds debug_timer_t::tick(const std::string &tag) {
     last = clock_realtime();
     out += strprintf("TIMER %s: %15s (%s %12" PRIu64 " %12" PRIu64 ")\n",
                      name.c_str(), tag.c_str(), format_time(last, local_or_utc_time_t::local).c_str(), (last - start).count(), (last - prev).count());
-    return time_cast<chrono::microseconds>(last - start);
+    return chrono::duration_cast<chrono::microseconds>(last - start);
 }

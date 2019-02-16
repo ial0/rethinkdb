@@ -98,6 +98,7 @@ public:
     raft_log_index_t log_index;
 };
 RDB_DECLARE_SERIALIZABLE(multi_table_manager_timestamp_t);
+RDB_DECLARE_SERIALIZABLE(realtime_t);
 
 /* In VERIFIED mode, the all replicas ready check makes sure that the leader
 still has a quorum and can perform Raft transactions. This is relatively expensive

@@ -369,7 +369,7 @@ query_cache_t::entry_t::entry_t(query_params_t *query_params,
         term_storage(std::move(query_params->term_storage)),
         global_optargs(std::move(_global_optargs)),
         deterministic_time(_deterministic_time),
-        start_time(get_kiloticks()),
+        start_time(clock_monotonic()),
         term_tree(std::move(_term_tree)),
         has_sent_batch(false) { }
 

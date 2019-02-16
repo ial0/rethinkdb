@@ -71,7 +71,7 @@ public:
     explicit gc_entry_t(data_block_manager_t *_parent)
         : parent(_parent),
           extent_ref(parent->extent_manager->gen_extent()),
-          timestamp(get_kiloticks()),
+          timestamp(clock_monotonic()),
           was_written(false),
           state(state_active),
           garbage_bytes_stat(_parent->static_config->extent_size()),
@@ -86,7 +86,7 @@ public:
     gc_entry_t(data_block_manager_t *_parent, int64_t _offset)
         : parent(_parent),
           extent_ref(parent->extent_manager->reserve_extent(_offset)),
-          timestamp(get_kiloticks()),
+          timestamp(clock_monotonic()),
           was_written(false),
           state(state_reconstructing),
           garbage_bytes_stat(_parent->static_config->extent_size()),

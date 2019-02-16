@@ -3,6 +3,20 @@
 
 #include "clustering/administration/datum_adapter.hpp"
 
+template <cluster_version_t W>
+void serialize(write_message_t *wm, const realtime_t &s) {
+    serialize<W>(wm,  std::chrono::duration_cast<std::chrono::microseconds>(s.time_since_epoch()));
+}
+
+template <cluster_version_t W>
+MUST_USE archive_result_t deserialize(read_stream_t *s, realtime_t *p) {
+    std::chrono::microseconds d;
+    archive_result_t res = deserialize<W>(s, &d);
+    if (bad(res)) { return res; }
+    *p = realtime_t{d};
+    return res;
+}
+
 RDB_IMPL_SERIALIZABLE_2_SINCE_v2_1(
     multi_table_manager_timestamp_t::epoch_t, timestamp, id);
 RDB_IMPL_SERIALIZABLE_2_SINCE_v2_1(

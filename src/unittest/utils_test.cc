@@ -72,7 +72,7 @@ TEST(UtilsTest, TimeLocal) {
     tzset();
 #endif
 
-    timespec_t time = timespec_t{chrono::seconds{1335301122} + chrono::nanoseconds{1234}};
+    timespec_t time = timespec_t{realtime_t{chrono::seconds{1335301122} + chrono::nanoseconds{1234}}};
     std::string formatted = format_time(time, local_or_utc_time_t::local);
     EXPECT_EQ("2012-04-24T13:58:42.000001234", formatted);
     std::string errmsg;
@@ -94,7 +94,7 @@ TEST(UtilsTest, TimeLocal) {
 }
 
 TEST(UtilsTest, TimeUTC) {
-	timespec_t time = timespec_t{chrono::seconds{1335301122} + chrono::nanoseconds{1234}};
+    timespec_t time = timespec_t{realtime_t{chrono::seconds{1335301122} + chrono::nanoseconds{1234}}};
     std::string formatted = format_time(time, local_or_utc_time_t::utc);
     EXPECT_EQ("2012-04-24T20:58:42.000001234", formatted);
     std::string errmsg;

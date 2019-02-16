@@ -202,35 +202,42 @@ void format_time(std::time_t time, printf_buffer_t *buf, local_or_utc_time_t zon
 }
 */
 
-std::string format_time(realtime_t time, local_or_utc_time_t zone) {
-    std::stringstream time_str;
-    std::time_t t = clock_to_time(time);
-    if (zone == local_or_utc_time_t::utc)
-        time_str << std::put_time(std::gmtime(&t), "%Y-%m-%dT%H:%M:%S.");
-    else
-        time_str << std::put_time(std::localtime(&t), "%Y-%m-%dT%H:%M:%S.");
-    time_str << std::setfill('0') << std::setw(9) << remaining_nanos(time).count();
+std::string format_time(timespec_t time, local_or_utc_time_t zone) {
+    char time_str[formatted_time_length + 1];
     
-    return time_str.str();
+    std::time_t t = chrono::system_clock::to_time_t(time.time());
+    auto *tm = (zone == local_or_utc_time_t::utc) ? std::gmtime(&t) : std::localtime(&t);
+    
+    std::strftime(time_str, sizeof(time_str), "%Y-%m-%dT%H:%M:%S.", tm);
+    std::snprintf(time_str+20,10,"%09ld", time.nanoseconds().count());
+    
+    return std::string{time_str};
 }
 
-timespec_t parse_time(const std::string &str, local_or_utc_time_t zone, std::string *errmsg_out)
+realtime_t parse_time(const std::string &str, local_or_utc_time_t zone, std::string *errmsg_out)
 {
     std::istringstream ss(str);
     int64_t n;
     std::tm tm;
     
-    ss >> std::get_time(&tm,"%Y-%m-%dT%H:%M:%S.") >> n;
-    if (ss.bad()) {
+    auto pos = ::strptime(str.c_str(), "%Y-%m-%dT%H:%M:%S.", &tm);
+    if (pos == nullptr) {
         *errmsg_out = "badly formatted time";
         return realtime_t::min();
     }
-    tm.tm_isdst =  zone == local_or_utc_time_t::utc ? 0 : -1;
-    auto clk = time_to_clock(mktime(&tm));
+    auto res = sscanf(pos, "%09ld", &n);
+    if (res == EOF) {
+        *errmsg_out = "badly formatted time";
+        return realtime_t::min();        
+    }
+    
+    tm.tm_isdst = zone == local_or_utc_time_t::utc ? 0 : -1;
+    auto clk = chrono::system_clock::from_time_t(mktime(&tm));
     *errmsg_out = "";
     return clk + chrono::nanoseconds{n};
 }
 
+/*
 bool parse_time(const std::string &str, local_or_utc_time_t zone,
                 struct timespec *out, std::string *errmsg_out) {
     struct tm t;
@@ -257,7 +264,7 @@ bool parse_time(const std::string &str, local_or_utc_time_t zone,
         /* Apparently `(x-y).total_seconds()` is returning the numeric difference in the
         POSIX timestamps, which approximates the difference in solar time. This is weird
         (I'd expect it to return the difference in atomic time) but it turns out to give
-        the correct behavior in this case. */
+        the correct behavior in this case. */ /*
         time.tv_sec = (as_ptime - epoch).total_seconds();
     } else {
         time.tv_sec = mktime(&t);
@@ -269,7 +276,8 @@ bool parse_time(const std::string &str, local_or_utc_time_t zone,
     *out = time;
     return true;
 }
-
+*/
+        
 with_priority_t::with_priority_t(int priority) {
     rassert(coro_t::self() != nullptr);
     previous_priority = coro_t::self()->get_priority();

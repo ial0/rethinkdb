@@ -10,7 +10,7 @@
 class log_server_business_card_t {
 public:
     typedef mailbox_t<boost::variant<std::vector<log_message_t>, std::string>> result_mailbox_t;
-    typedef mailbox_t<int, timespec_t,  timespec_t, result_mailbox_t::address_t> request_mailbox_t;
+    typedef mailbox_t<int, timespec_t, timespec_t, result_mailbox_t::address_t> request_mailbox_t;
 
     log_server_business_card_t() { }
     explicit log_server_business_card_t(const request_mailbox_t::address_t &a) : address(a) { }
@@ -49,6 +49,7 @@ public:
     log_transfer_exc_t() : std::runtime_error(
         "Lost contact with server while trying to transfer log messages") { }
 };
+
 std::vector<log_message_t> fetch_log_file(
     mailbox_manager_t *mailbox_manager,
     const log_server_business_card_t &server_bcard,

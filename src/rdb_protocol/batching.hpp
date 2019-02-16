@@ -58,9 +58,9 @@ public:
         els_left(std::move(other.els_left)),
         size_left(std::move(other.size_left)),
         end_time(std::move(other.end_time)) { }
-    kiloticks_t time_left() {
+    ticks_t ticks_left() {
         auto cur_time = clock_monotonic();
-        return end_time > cur_time ? time_cast<kiloticks_t>(end_time - cur_time) : kiloticks_t::zero();
+        return end_time > cur_time ? end_time - cur_time : ticks_t::zero();
     }
     batch_type_t get_batch_type() { return batch_type; }
 private:
@@ -114,7 +114,7 @@ private:
 
     batch_type_t batch_type;
     int64_t min_els, max_els, max_size, first_scaledown_factor;
-    chrono::microseconds max_dur;
+    kiloticks_t max_dur;
     monotonic_t start_time;
     optional<sorting_t> lazy_sorting_override;
 };

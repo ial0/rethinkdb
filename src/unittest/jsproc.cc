@@ -59,7 +59,7 @@ void run_datum_test(const std::string &source_code, ql::datum_t *res_out) {
     js_runner.begin(&extproc_pool, nullptr, limits);
 
     js_runner_t::req_config_t config;
-    config.timeout_ms = seconds_t{10};
+    config.timeout_ms = chrono::seconds{10};
     js_result_t result = js_runner.eval(source_code, config);
     ASSERT_TRUE(js_runner.connected());
 
@@ -156,7 +156,7 @@ SPAWNER_TEST(JSProc, InvalidFunction) {
     const std::string source_code = "(function() {)";
 
     js_runner_t::req_config_t config;
-    config.timeout_ms = seconds_t{10};
+    config.timeout_ms = chrono::seconds{10};
     js_result_t result = js_runner.eval(source_code, config);
     ASSERT_TRUE(js_runner.connected());
     

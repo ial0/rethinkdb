@@ -32,7 +32,7 @@ batchspec_t::batchspec_t(
     int64_t _max_els,
     int64_t _max_size,
     int64_t _first_scaledown,
-    chrono::microseconds _max_dur,
+    kiloticks_t _max_dur,
     monotonic_t _start_time)
     : batch_type(_batch_type),
       min_els(_min_els),
@@ -80,10 +80,9 @@ static bool set_if_present(const char *argname, env_t *env, datum_t * dest) {
 }
 
 batchspec_t batchspec_t::user(batch_type_t batch_type, env_t *env) {
-    const double SECS_TO_USECS = 1000 * 1000;
     // Kind of arbitrarily set to 1 day, but makes sure we don't overflow when
     // casting from double to int64_t
-    const double MAX_BATCH_SECONDS = 60 * 60 * 24;
+    const auto MAX_BATCH_SECONDS = datum_seconds_t{60 * 60 * 24};
     datum_t max_els_d, min_els_d, max_size_d, max_dur_d;
     datum_t first_scaledown_d;
 
@@ -109,12 +108,12 @@ batchspec_t batchspec_t::user(batch_type_t batch_type, env_t *env) {
     if (max_dur_d.has()) {
         rcheck_target(
             &max_dur_d,
-            max_dur_d.as_num() < MAX_BATCH_SECONDS,
+            datum_seconds_t{max_dur_d.as_num()} < MAX_BATCH_SECONDS,
             base_exc_t::LOGIC,
             strprintf("max_batch_seconds is too large (got `%"
                       PR_RECONSTRUCTABLE_DOUBLE "`, must be less than %"
                       PR_RECONSTRUCTABLE_DOUBLE ").",
-                      max_dur_d.as_num(), MAX_BATCH_SECONDS));
+                      max_dur_d.as_num(), MAX_BATCH_SECONDS.count()));
         rcheck_target(
             &max_dur_d,
             max_dur_d.as_num() >= 0.0,
@@ -123,7 +122,7 @@ batchspec_t batchspec_t::user(batch_type_t batch_type, env_t *env) {
                       PR_RECONSTRUCTABLE_DOUBLE "`).",
                       max_dur_d.as_num()));
 
-        max_dur = time_cast<chrono::microseconds>(datum_seconds_t{max_dur_d.as_num()});
+        max_dur = time_cast<kiloticks_t>(datum_seconds_t{max_dur_d.as_num()});
     }
     // Protect the user in case they're a dork.  Normally we would do rfail and
     // trigger exceptions, but due to NOTHROWs above this may not be safe.

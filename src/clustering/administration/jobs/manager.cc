@@ -9,6 +9,8 @@
 #include "rdb_protocol/context.hpp"
 #include "rdb_protocol/query_cache.hpp"
 
+#include "time.hpp"
+
 const size_t jobs_manager_t::printed_query_columns = 89;
 
 const uuid_u jobs_manager_t::base_sindex_id =
@@ -74,7 +76,7 @@ void jobs_manager_t::on_get_job_reports(
     // zero.
     auto time = clock_realtime();
     // We have some microtime_t values and we also have some kiloticks_t values.
-    kiloticks_t kticks = get_kiloticks();
+    auto monotime = clock_monotonic();
 
     pmap(get_num_threads(), [&](int32_t threadnum) {
         // Here we need to store `query_job_report_t` locally to prevent multiple threads
@@ -96,7 +98,7 @@ void jobs_manager_t::on_get_job_reports(
 
                     query_job_reports_inner.emplace_back(
                         pair.second->job_id,
-                        time - std::min(pair.second->start_time, time),
+                        monotime - std::min(pair.second->start_time, monotime),
                         server_id,
                         query_cache->get_client_addr_port(),
                         std::move(render),

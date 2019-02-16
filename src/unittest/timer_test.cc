@@ -26,7 +26,7 @@ const chrono::milliseconds max_error_ms{5};
 const int  max_average_error_ms = 2;
 #endif
 
-auto nsabs(ticks_t t)
+ticks_t nsabs(ticks_t t)
 {
 	return t > ticks_t::zero() ? t : -t;
 }

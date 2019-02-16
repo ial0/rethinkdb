@@ -29,6 +29,46 @@ RDB_IMPL_SERIALIZABLE_4_SINCE_v1_13(log_message_t, timestamp, uptime, level, mes
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
 #endif
+
+template <cluster_version_t W>
+void serialize(write_message_t *wm, const timespec_t &s) {
+    auto const t = s.time();
+
+    serialize<W>(wm, std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch()));
+    serialize<W>(wm, remaining_nanos(t));
+}
+
+template <cluster_version_t W>
+MUST_USE archive_result_t deserialize(read_stream_t *s, timespec_t *p) {
+    std::chrono::seconds d;
+    archive_result_t res = deserialize<W>(s, &d);
+    if (bad(res)) { return res; }
+    std::chrono::seconds n;
+    res = deserialize<W>(s, &n);
+    *p = timespec_t{realtime_t{d+n}};
+    return res;
+}
+
+template <cluster_version_t W>
+void serialize(write_message_t *wm, const uptime_t &s) {
+    auto const t = s.time();
+
+    serialize<W>(wm, std::chrono::duration_cast<chrono::seconds>(t));
+    serialize<W>(wm, remaining_nanos(t));
+}
+
+template <cluster_version_t W>
+MUST_USE archive_result_t deserialize(read_stream_t *s, uptime_t *p) {
+    std::chrono::seconds d;
+    archive_result_t res = deserialize<W>(s, &d);
+    if (bad(res)) { return res; }
+    std::chrono::seconds n;
+    res = deserialize<W>(s, &n);
+    *p = uptime_t{d+n};
+    return res;
+}
+
+
 template <cluster_version_t W>
 void serialize(write_message_t *wm, const struct timespec &ts) {
     static_assert(
@@ -73,7 +113,8 @@ archive_result_t deserialize(read_stream_t *s, struct timespec *ts_out) {
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-INSTANTIATE_SERIALIZABLE_SINCE_v1_13(struct timespec);
+INSTANTIATE_SERIALIZABLE_SINCE_v1_13(timespec_t);
+INSTANTIATE_SERIALIZABLE_SINCE_v1_13(uptime_t);
 
 std::string format_log_level(log_level_t l) {
     switch (l) {
@@ -109,11 +150,14 @@ std::string format_log_message(const log_message_t &m, bool for_console) {
     std::string message_reformatted;
 
     std::string prepend;
+    auto n = m.uptime.time() - time_cast<chrono::seconds>(m.uptime.time());
+
     if (!for_console) {
         prepend = strprintf("%s %ld.%06lds %s: ",
                             format_time(m.timestamp, local_or_utc_time_t::local).c_str(),
-                            time_cast<chrono::seconds>(m.uptime).count(),
-                            time_cast<chrono::microseconds>(m.uptime % chrono::seconds{1}).count(),
+                            time_cast<chrono::seconds>(m.uptime.time()).count(),
+                            time_cast<chrono::nanoseconds>(n).count(),
+                            //time_cast<chrono::microseconds>(m.uptime.time() % chrono::seconds{1}).count(),
                             format_log_level(m.level).c_str());
     } else {
         if (m.level != log_level_info && m.level != log_level_notice) {
@@ -197,7 +241,7 @@ log_message_t parse_log_message(const std::string &s) THROWS_ONLY(log_read_exc_t
     while (*p) p++;
     const char *end_message = p;
 
-    timespec_t timestamp;
+    realtime_t timestamp;
     {
         std::string errmsg;
         timestamp = parse_time(std::string(start_timestamp, end_timestamp - start_timestamp),
@@ -205,7 +249,7 @@ log_message_t parse_log_message(const std::string &s) THROWS_ONLY(log_read_exc_t
         if (!errmsg.empty())
             throw log_read_exc_t(errmsg);
     }
-    chrono::microseconds uptime{0};
+    chrono::nanoseconds uptime{0};
 
     {
         std::string tv_sec_str(start_uptime_ipart, end_uptime_ipart - start_uptime_ipart);
@@ -223,7 +267,7 @@ log_message_t parse_log_message(const std::string &s) THROWS_ONLY(log_read_exc_t
         }
 
         // TODO: Seriously?  We assume three decimal places?
-        uptime += chrono::microseconds{tv_nsec};
+        uptime += chrono::nanoseconds{tv_nsec};
     }
 
     log_level_t level = parse_log_level(std::string(start_level, end_level - start_level));
@@ -331,7 +375,7 @@ private:
     void initiate_write(log_level_t level, const std::string &message);
     base_path_t filename;
     monotonic_t uptime_reference;
-    timespec_t last_msg_timestamp;
+    realtime_t last_msg_timestamp;
     spinlock_t last_msg_timestamp_lock;
 
 #ifdef _WIN32
@@ -411,7 +455,7 @@ void fallback_log_writer_t::install(const std::string &logfile_name) {
 
 log_message_t fallback_log_writer_t::assemble_log_message(
         log_level_t level, const std::string &m) {
-    timespec_t timestamp = clock_realtime();
+    auto timestamp = clock_realtime();
 
     {
         /* Make sure timestamps on log messages are unique. */
@@ -422,7 +466,7 @@ log_message_t fallback_log_writer_t::assemble_log_message(
         being written; but the `log*()` functions are supposed to work even outside of
         the thread pool, including in the blocker pool. */
         spinlock_acq_t lock_acq(&last_msg_timestamp_lock);
-        timespec_t last_plus = last_msg_timestamp + chrono::nanoseconds{1};
+        auto last_plus = last_msg_timestamp + chrono::nanoseconds{1};
         if (last_plus > timestamp) {
             timestamp = last_plus;
         }
@@ -431,7 +475,7 @@ log_message_t fallback_log_writer_t::assemble_log_message(
 
     auto uptime = clock_monotonic() -  uptime_reference;
 
-    return log_message_t(timestamp, time_cast<chrono::milliseconds>(uptime), level, m);
+    return log_message_t(timestamp, uptime, level, m);
 }
 
 // WINDOWS TODO: this function could benefit from some refactoring
