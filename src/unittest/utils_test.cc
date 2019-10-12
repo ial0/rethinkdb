@@ -73,12 +73,16 @@ TEST(UtilsTest, TimeLocal) {
 #endif
 
     timespec_t time = timespec_t{realtime_t{chrono::seconds{1335301122} + chrono::nanoseconds{1234}}};
-    std::string formatted = format_time(time, local_or_utc_time_t::local);
-    EXPECT_EQ("2012-04-24T13:58:42.000001234", formatted);
+    std::string formatted_local = format_time(time, local_or_utc_time_t::local);
+    std::string formatted_utc = format_time(time, local_or_utc_time_t::utc);
+    EXPECT_EQ("2012-04-24T13:58:42.000001234", formatted_local);
+    EXPECT_NE("2012-04-24T13:58:42.000001234", formatted_utc);
     std::string errmsg;
-    auto parsed = parse_time(formatted, local_or_utc_time_t::local, &errmsg);
+    auto parsed_local = parse_time(formatted_local, local_or_utc_time_t::local, &errmsg);
+    auto parsed_utc = parse_time(formatted_local, local_or_utc_time_t::utc, &errmsg);
     ASSERT_TRUE(errmsg.empty());
-    EXPECT_EQ(parsed, time);
+    EXPECT_EQ(parsed_local, time);
+    EXPECT_NE(parsed_utc, time);
 
 #ifdef _WIN32
     _putenv(("TZ=" + oldtz).c_str());

@@ -14,7 +14,6 @@ using realtime_t = std::chrono::system_clock::time_point;
 
 struct timespec_t {
     realtime_t _time;
-    std::chrono::nanoseconds _remaining;
 
     timespec_t() : _time{realtime_t::min()} {}
 
@@ -33,6 +32,10 @@ struct timespec_t {
         return a._time == b._time;
     }
 
+    friend bool operator!=(timespec_t const &a, timespec_t const &b) {
+        return a._time != b._time;
+    }
+    
     friend bool operator<(timespec_t const &a, timespec_t const &b) {
         return a._time < b._time;
     }

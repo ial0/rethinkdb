@@ -13,7 +13,7 @@ class timer_token_t : public intrusive_priority_queue_node_t<timer_token_t> {
     friend class timer_handler_t;
 
 private:
-    timer_token_t() : interval(chrono::nanoseconds{-1}), next_time(chrono::nanoseconds{-1}), callback(nullptr) { }
+    timer_token_t() : interval(ticks_t{-1}), next_time(monotonic_t::min()), callback(nullptr) { }
 
     friend bool left_is_higher_priority(const timer_token_t *left, const timer_token_t *right);
 
@@ -35,7 +35,7 @@ bool left_is_higher_priority(const timer_token_t *left, const timer_token_t *rig
 
 timer_handler_t::timer_handler_t(linux_event_queue_t *queue)
     : timer_provider(queue),
-      expected_oneshot_time(chrono::nanoseconds::zero()) {
+      expected_oneshot_time(ticks_t::zero()) {
     // Right now, we have no tokens.  So we don't ask the timer provider to do anything for us.
 }
 
@@ -55,7 +55,7 @@ void timer_handler_t::on_oneshot() {
 
         // Put the repeating timer back on the queue before the callback can be called (so that it
         // may be canceled).
-        if (token->interval != chrono::nanoseconds::zero()) {
+        if (token->interval != ticks_t::zero()) {
             token->next_time = monotime + token->interval;
             token_queue.push(token.get());
         }
@@ -63,7 +63,7 @@ void timer_handler_t::on_oneshot() {
         token->callback->on_timer(monotime);
 
         // Delete nonrepeating timer tokens.
-        if (token->interval != chrono::nanoseconds::zero()) {
+        if (token->interval != ticks_t::zero()) {
             token.release();
         }
     }
@@ -77,7 +77,7 @@ void timer_handler_t::on_oneshot() {
 timer_token_t *timer_handler_t::add_timer_internal(
         const monotonic_t next_time, const chrono::milliseconds interval,
         timer_callback_t *callback) {
-	rassert(next_time >= monotonic_t{});
+    rassert(next_time >= monotonic_t{});
     rassert(interval >= chrono::milliseconds::zero());
 
     std::unique_ptr<timer_token_t> token{new timer_token_t{}};
