@@ -26,7 +26,7 @@ timer "rings". */
 class signal_timer_t : public signal_t, private timer_callback_t {
 public:
     signal_timer_t();
-    explicit signal_timer_t(milli_t ms); // Calls `start` for you.
+    explicit signal_timer_t(chrono::milliseconds ms); // Calls `start` for you.
     ~signal_timer_t();
 
     // Starts the timer, cannot be called if the timer is already running
