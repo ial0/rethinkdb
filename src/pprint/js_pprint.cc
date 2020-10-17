@@ -2,6 +2,7 @@
 #include "pprint/js_pprint.hpp"
 
 #include <vector>
+#include <cmath>
 
 #include "containers/object_buffer.hpp"
 #include "rdb_protocol/base64.hpp"
@@ -180,8 +181,8 @@ private:
             stream.add(d.as_bool() ? true_v : false_v);
             return;
         case ql::datum_t::type_t::R_NUM:
-            push_text(trunc(d.as_num()) == d.as_num()
-                             ? std::to_string(lrint(d.as_num()))
+            push_text(std::trunc(d.as_num()) == d.as_num()
+                             ? std::to_string(std::lrint(d.as_num()))
                              : std::to_string(d.as_num()));
             return;
         case ql::datum_t::type_t::R_BINARY: {
@@ -720,7 +721,7 @@ private:
     }
 
     void var_name(const ql::datum_t &d) {
-        push_text(print_var(lrint(d.as_num())));
+        push_text(print_var(std::lrint(d.as_num())));
     }
 
     void to_js_func(const ql::raw_term_t &t) {

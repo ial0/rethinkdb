@@ -3,12 +3,13 @@
 #define CRYPTO_RANDOM_HPP
 
 #include <array>
+#include <cstdlib>
 
 namespace crypto {
 
 namespace detail {
 
-void random_bytes(unsigned char *, size_t);
+void random_bytes(unsigned char *, std::size_t);
 
 }  // namespace detail
 
