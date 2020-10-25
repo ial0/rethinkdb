@@ -52,20 +52,17 @@ void timer_handler_t::on_oneshot() {
 
     while (!token_queue.empty() && token_queue.peek()->next_time <= time) {
         std::unique_ptr<timer_token_t> token{token_queue.pop()};
+        auto *token_ptr = token.get();
 
         // Put the repeating timer back on the queue before the callback can be called (so that it
         // may be canceled).
         if (token->interval != ticks_t::zero()) {
             token->next_time = monotime + token->interval;
-            token_queue.push(token.get());
+            token_queue.push(token.release());
         }
 
-        token->callback->on_timer(monotime);
+        token_ptr->callback->on_timer(monotime);
 
-        // Delete nonrepeating timer tokens.
-        if (token->interval != ticks_t::zero()) {
-            token.release();
-        }
     }
 
     // We've processed young tokens.  Now schedule a new one-shot (if necessary).
